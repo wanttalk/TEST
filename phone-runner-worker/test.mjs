@@ -165,11 +165,13 @@ test("the paired installation may rotate its FCM token", async () => {
     deviceId: "stable-device-0001",
   }), env);
   assert.equal(first.status, 200);
+  const firstBody = await first.json();
 
   const secondToken = "rotated-fcm-token-" + "b".repeat(48);
   const second = await worker.fetch(registrationRequest({
     token: secondToken,
     deviceId: "stable-device-0001",
+    secret: firstBody.device_token,
   }), env);
   assert.equal(second.status, 200);
   assert.equal(await kv.get("fcm_token"), secondToken);
@@ -218,6 +220,7 @@ test("phone result report is stored while health omits request id and secrets", 
   const kv = memoryKv({
     fcm_token: "private-device-token-never-return-this",
     device_meta: JSON.stringify({ device_id: "stable-device-0001" }),
+    device_auth_token: "device-auth-token",
   });
   const env = {
     DEVICE_REGISTRATION_TOKEN: "pairing-secret-1234567890",
@@ -232,6 +235,7 @@ test("phone result report is stored while health omits request id and secrets", 
     ok: true,
     err: 0,
     exitCode: 0,
+    secret: "device-auth-token",
   }), env);
   assert.equal(report.status, 200);
 
