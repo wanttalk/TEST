@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
@@ -29,7 +31,6 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(20);
@@ -62,12 +63,10 @@ public final class MainActivity extends Activity {
         content.addView(workerUrlInput);
 
         registrationTokenInput = new EditText(this);
-        registrationTokenInput.setHint("裝置配對密鑰");
+        registrationTokenInput.setHint("一次性配對碼");
         registrationTokenInput.setSingleLine(true);
-        registrationTokenInput.setInputType(
-            InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD
-        );
-        registrationTokenInput.setText(DeviceRegistration.getRegistrationToken(this));
+        registrationTokenInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        registrationTokenInput.setText(DeviceRegistration.getPairingToken(this));
         content.addView(registrationTokenInput);
 
         Button savePairing = button("儲存配對並登記這支手機");
@@ -82,9 +81,7 @@ public final class MainActivity extends Activity {
         battery.setOnClickListener(v -> PowerPolicy.requestBatteryOptimizationExemption(this));
         content.addView(battery);
 
-        Button vendorBackground = button(
-            PowerPolicy.isXiaomiFamily() ? "開啟小米自啟動／背景設定" : "開啟廠牌背景設定"
-        );
+        Button vendorBackground = button(PowerPolicy.isXiaomiFamily() ? "開啟小米自啟動／背景設定" : "開啟廠牌背景設定");
         vendorBackground.setOnClickListener(v -> {
             if (!PowerPolicy.openVendorBackgroundSettings(this)) {
                 Toast.makeText(this, "無法直接開啟背景設定", Toast.LENGTH_LONG).show();
@@ -116,9 +113,17 @@ public final class MainActivity extends Activity {
         scroll.addView(content);
         setContentView(scroll);
 
+        handlePairingIntent(getIntent());
         requestNeededPermissions();
         refreshFirebaseToken();
         refreshStatus();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handlePairingIntent(intent);
     }
 
     @Override
@@ -133,32 +138,44 @@ public final class MainActivity extends Activity {
         return button;
     }
 
+    private void handlePairingIntent(Intent intent) {
+        if (intent == null) return;
+        Uri data = intent.getData();
+        if (data == null) return;
+        if (!"phonerunner".equalsIgnoreCase(data.getScheme())) return;
+        if (!"pair".equalsIgnoreCase(data.getHost())) return;
+
+        String workerUrl = data.getQueryParameter("url");
+        String pairingCode = data.getQueryParameter("code");
+        if (workerUrl == null || pairingCode == null) return;
+
+        try {
+            DeviceRegistration.saveConfiguration(this, workerUrl, pairingCode);
+            workerUrlInput.setText(DeviceRegistration.getWorkerUrl(this));
+            registrationTokenInput.setText(DeviceRegistration.getPairingToken(this));
+            DeviceRegistration.registerCurrentToken(this);
+            Toast.makeText(this, "配對資料已匯入，正在登記這支手機", Toast.LENGTH_LONG).show();
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        refreshStatus();
+    }
+
     private void requestNeededPermissions() {
         java.util.ArrayList<String> wanted = new java.util.ArrayList<>();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-            && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+            && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             wanted.add(Manifest.permission.POST_NOTIFICATIONS);
         }
-
-        if (checkSelfPermission(TermuxCommandClient.TERMUX_PERMISSION)
-            != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(TermuxCommandClient.TERMUX_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
             wanted.add(TermuxCommandClient.TERMUX_PERMISSION);
         }
-
-        if (!wanted.isEmpty()) {
-            requestPermissions(wanted.toArray(new String[0]), PERMISSION_REQUEST);
-        }
+        if (!wanted.isEmpty()) requestPermissions(wanted.toArray(new String[0]), PERMISSION_REQUEST);
     }
 
     private void savePairing() {
         try {
-            DeviceRegistration.saveConfiguration(
-                this,
-                workerUrlInput.getText().toString(),
-                registrationTokenInput.getText().toString()
-            );
+            DeviceRegistration.saveConfiguration(this, workerUrlInput.getText().toString(), registrationTokenInput.getText().toString());
             DeviceRegistration.registerCurrentToken(this);
             Toast.makeText(this, "配對資料已儲存，正在登記 FCM Token", Toast.LENGTH_LONG).show();
         } catch (IllegalArgumentException e) {
@@ -174,9 +191,7 @@ public final class MainActivity extends Activity {
             TermuxCommandClient.dispatchHealthCheck(this, requestId);
             RunnerState.recordDispatch(this, requestId, "HEALTH_DISPATCHED");
             Toast.makeText(this, "橋接測試已送出", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            recordManualFailure(requestId, e);
-        }
+        } catch (Exception e) { recordManualFailure(requestId, e); }
         refreshStatus();
     }
 
@@ -187,25 +202,17 @@ public final class MainActivity extends Activity {
             TermuxCommandClient.dispatchRunner(this, requestId);
             RunnerState.recordDispatch(this, requestId, "RUNNER_DISPATCHED");
             Toast.makeText(this, "Runner 已送到 Termux", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            recordManualFailure(requestId, e);
-        }
+        } catch (Exception e) { recordManualFailure(requestId, e); }
         refreshStatus();
     }
 
     private void recordManualFailure(String requestId, Exception e) {
-        RunnerState.recordDispatch(
-            this,
-            requestId,
-            "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage()
-        );
+        RunnerState.recordDispatch(this, requestId, "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
     }
 
     private void refreshFirebaseToken() {
-        if (FirebaseApp.getApps(this).isEmpty()) {
-            return;
-        }
+        if (FirebaseApp.getApps(this).isEmpty()) return;
         FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token -> {
             if (token != null && !token.trim().isEmpty()) {
                 RunnerState.recordToken(this, token);
@@ -222,9 +229,7 @@ public final class MainActivity extends Activity {
             refreshFirebaseToken();
             return;
         }
-
-        ClipboardManager clipboard =
-            (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) {
             clipboard.setPrimaryClip(ClipData.newPlainText("FCM token", token));
             Toast.makeText(this, "FCM Token 已複製", Toast.LENGTH_SHORT).show();
@@ -236,17 +241,18 @@ public final class MainActivity extends Activity {
         boolean termux = TermuxCommandClient.isTermuxInstalled(this);
         boolean termuxPermission = TermuxCommandClient.hasRunCommandPermission(this);
         boolean notificationPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-            || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED;
+            || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         boolean batteryExempt = PowerPolicy.isBatteryOptimizationIgnored(this);
         boolean hasToken = !RunnerState.getToken(this).trim().isEmpty();
-        boolean pairing = DeviceRegistration.isConfigured(this);
+        boolean pairingConfigured = DeviceRegistration.isConfigured(this);
+        boolean paired = DeviceRegistration.isPaired(this);
         boolean registered = "REGISTERED".equals(RunnerState.registrationStatus(this));
 
         statusView.setText(
             "Firebase: " + mark(firebase)
                 + "\nFCM Token: " + mark(hasToken)
-                + "\nWorker 配對: " + mark(pairing)
+                + "\nWorker 配對資料: " + mark(pairingConfigured)
+                + "\n裝置專用密鑰: " + mark(paired)
                 + "\n裝置已登記: " + mark(registered)
                 + "\nTermux: " + mark(termux)
                 + "\nTermux RUN_COMMAND 權限: " + mark(termuxPermission)
@@ -258,11 +264,6 @@ public final class MainActivity extends Activity {
         );
     }
 
-    private String mark(boolean ok) {
-        return ok ? "🟢" : "🔴";
-    }
-
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
-    }
+    private String mark(boolean ok) { return ok ? "🟢" : "🔴"; }
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 }
