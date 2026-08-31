@@ -6,6 +6,23 @@ on:
       - "phone-runner-app/**"
       - ".github/workflows/build-phone-runner.yml"
   workflow_dispatch:
+    inputs:
+      firebase_application_id:
+        description: "Firebase mobilesdk_app_id (google_app_id)"
+        required: false
+        type: string
+      firebase_sender_id:
+        description: "Firebase project_number / sender ID"
+        required: false
+        type: string
+      firebase_project_id:
+        description: "Firebase project_id"
+        required: false
+        type: string
+      firebase_api_key:
+        description: "Firebase Android API key"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -13,6 +30,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_APPLICATION_ID: ${{ inputs.firebase_application_id || '' }}
+      FIREBASE_SENDER_ID: ${{ inputs.firebase_sender_id || '' }}
+      FIREBASE_PROJECT_ID: ${{ inputs.firebase_project_id || '' }}
+      FIREBASE_API_KEY: ${{ inputs.firebase_api_key || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -37,4 +59,4 @@ jobs:
         with:
           name: phone-runner-debug-apk
           path: phone-runner-app/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 1
+          retention-days: 7
