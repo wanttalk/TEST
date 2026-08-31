@@ -28,12 +28,10 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Set up Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v3
-
       - name: Install bootstrap dependencies
         run: |
           python -m pip install --disable-pip-version-check pexpect
+          npm install --global firebase-tools@15.25.1
           npm install --prefix phone-runner-worker
 
       - name: Set up Gradle 9.5
@@ -44,7 +42,7 @@ jobs:
       - name: Authorize and provision infrastructure
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python .github/scripts/finalize_phone_runner.py
+        run: python .github/scripts/finalize_phone_runner_v2.py
 
       - name: Upload final Firebase APK
         uses: actions/upload-artifact@v6
