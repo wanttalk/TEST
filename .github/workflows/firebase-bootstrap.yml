@@ -1,10 +1,7 @@
-name: Firebase Bootstrap
+# Legacy workflow retained for traceability. Automatic push triggers are intentionally disabled.
+name: Firebase Bootstrap (manual legacy only)
 
 on:
-  push:
-    paths:
-      - ".github/workflows/firebase-bootstrap.yml"
-      - ".github/scripts/firebase_bootstrap.py"
   workflow_dispatch:
 
 permissions:
