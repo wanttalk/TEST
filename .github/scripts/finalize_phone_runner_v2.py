@@ -267,16 +267,35 @@ def cloudflare_login(issue):
         elif idx == 5:
             raise TimeoutError("Cloudflare authorization timed out")
     run(["npx", "wrangler", "whoami"], cwd=WORKER_DIR, env=env)
+    token_result = run(["npx", "wrangler", "auth", "token", "--json"],
+                       cwd=WORKER_DIR, env=env, timeout=180)
+    raw = (token_result.stdout or "").strip()
+    start, end = raw.find("{"), raw.rfind("}")
+    if start < 0 or end < start:
+        raise RuntimeError("Wrangler auth token output was not JSON")
+    try:
+        auth = json.loads(raw[start:end + 1])
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Wrangler auth token output was invalid JSON") from exc
+    token = auth.get("token") or ""
+    if not token:
+        raise RuntimeError("Wrangler auth token was empty")
     comment(issue, "CLOUDFLARE_AUTH_OK\n\nCloudflare authorization completed.")
+    return token
 
 
-def put_secret(name, value):
+def put_secret(name, value, env):
     run(["npx", "wrangler", "secret", "put", name], cwd=WORKER_DIR,
-        env={**os.environ, "CI": "true"}, input_text=value + "\n", timeout=180)
+        env=env, input_text=value + "\n", timeout=180)
 
 
-def deploy_worker(service_account, issue):
-    env = {**os.environ, "CI": "true"}
+def deploy_worker(service_account, issue, cloudflare_token):
+    env = {
+        **os.environ,
+        "CI": "true",
+        "CLOUDFLARE_API_TOKEN": cloudflare_token,
+        "CLOUDFLARE_ACCOUNT_ID": "29a673511975a847e1ab66dba5bb0b72",
+    }
     first = run(["npx", "wrangler", "deploy"], cwd=WORKER_DIR, env=env, timeout=360)
     output = (first.stdout or "") + "\n" + (first.stderr or "")
     match = re.search(r"https://[A-Za-z0-9.-]+\.workers\.dev", output)
@@ -295,7 +314,7 @@ def deploy_worker(service_account, issue):
         ("WAKE_API_TOKEN", wake_token),
         ("GITHUB_WEBHOOK_SECRET", webhook_secret),
     ):
-        put_secret(name, value)
+        put_secret(name, value, env)
 
     second = run(["npx", "wrangler", "deploy"], cwd=WORKER_DIR, env=env, timeout=360)
     output += "\n" + (second.stdout or "") + "\n" + (second.stderr or "")
@@ -333,8 +352,8 @@ def main():
     access_token = firebase_access_token()
     service_account = create_fcm_service_account(access_token)
     firebase_config = firebase_android_config()
-    cloudflare_login(issue)
-    worker_url, pairing_code, wake_token, webhook_secret = deploy_worker(service_account, issue)
+    cloudflare_token = cloudflare_login(issue)
+    worker_url, pairing_code, wake_token, webhook_secret = deploy_worker(service_account, issue, cloudflare_token)
     build_apk(firebase_config)
     ciphertext = encrypt_for_assistant({
         "url": worker_url,
