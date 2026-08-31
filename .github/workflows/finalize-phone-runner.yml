@@ -1,0 +1,54 @@
+name: Finalize Phone Runner Infrastructure
+
+on:
+  push:
+    paths:
+      - ".github/workflows/finalize-phone-runner.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Install bootstrap dependencies
+        run: |
+          python -m pip install --disable-pip-version-check pexpect
+          npm install --prefix phone-runner-worker
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Authorize and provision infrastructure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/finalize_phone_runner.py
+
+      - name: Upload final Firebase APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: phone-runner-final-debug-apk
+          path: phone-runner-app/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
