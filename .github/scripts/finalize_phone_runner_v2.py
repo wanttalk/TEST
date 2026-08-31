@@ -20,13 +20,13 @@ PACKAGE = "com.wanttalk.phonerunner"
 WORKER_DIR = Path("phone-runner-worker")
 APP_DIR = Path("phone-runner-app")
 ASSISTANT_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4nM1pjrqfTgj4AvHhvCo
-LB9dO9A9GvMtLv0YdQ+4w9eLfjt6b+wiy1vSpG4k7E7hWeoNUnS85cJdu7MCmHjT
-gZ1YCJEuewPH9Jln5iNwPNeWR2yodgVDYPq0iCjD12iMz6n6vf3ZSfWAqcnAOXLw
-SKqfXvFRohKrcH4lWR2KYKHTfUXwVzmv/SiiiyGX4gQLu4cXB/Yt8dsINQCqJua7
-i+UG701gAxL27nA+rIAhhszbaduVUGJ/2UEdolCNtmNRGxSo5OIbaj/vEhZexKiZ
-ZSQjuEb7yTtcBxqb/pI0vClbGau70ySOR2/e8k7TCQ/Ps+woEt0pzeYRGrGvVzLw
-OQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjMGIqd7AOMvwyArppgBX
+hANu1+UXf4e5rlqBXHq6yugqwSlTy8yQOkEcTtQvv2D5YLcOd/M/0Klmy+gHsti6
+79rvN33DjrP//qKwNcuC8yVWjJkAYQ5JBEGEuDX8PbjweXK0SMwEQ7yzN2+cA4zV
+G+H+39oMRVIv+PK2wIueQoCY2UJbQr2S5owOi6KYO6wggewECEJfNDXecAMpMApf
+akyyJpxgnHW4FOYj9KlAlexyEA6tHtx4DSRVH0Ia3BVMIK/TEKcPmplmD/biCDLB
+aBxFkpTdPijc0t+aLGr8xsNIDPkwi2QaOwfH6XtggRHw9WVD4UH2ZruY5T5iN/CV
+TwIDAQAB
 -----END PUBLIC KEY-----
 """
 
@@ -317,7 +317,7 @@ def deploy_worker(service_account, issue):
         ("FIREBASE_PROJECT_ID", PROJECT_ID),
         ("FIREBASE_CLIENT_EMAIL", service_account["client_email"]),
         ("FIREBASE_PRIVATE_KEY", service_account["private_key"]),
-        ("DEVICE_PAIRING_TOKEN", pairing_code),
+        ("DEVICE_REGISTRATION_TOKEN", pairing_code),
         ("WAKE_API_TOKEN", wake_token),
         ("GITHUB_WEBHOOK_SECRET", webhook_secret),
     ):
