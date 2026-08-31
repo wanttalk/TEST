@@ -1,9 +1,7 @@
-name: Finalize Phone Runner Infrastructure
+# Legacy workflow retained for traceability. Automatic push triggers are intentionally disabled.
+name: Finalize Phone Runner Infrastructure (manual legacy only)
 
 on:
-  push:
-    paths:
-      - ".github/workflows/finalize-phone-runner.yml"
   workflow_dispatch:
 
 permissions:
