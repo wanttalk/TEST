@@ -1,0 +1,53 @@
+name: Firebase Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Firebase CLI and helper dependencies
+        run: |
+          npm install --global firebase-tools@15.25.1
+          python -m pip install --disable-pip-version-check pexpect
+
+      - name: Authorize and create Firebase project
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/firebase_bootstrap.py
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Build Firebase-configured Phone Runner APK
+        working-directory: phone-runner-app
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Upload Firebase-configured APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: phone-runner-firebase-debug-apk
+          path: phone-runner-app/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
