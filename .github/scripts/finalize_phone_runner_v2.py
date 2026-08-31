@@ -198,7 +198,7 @@ def create_fcm_service_account(token):
 
 
 def firebase_android_config():
-    result = run(["firebase", "apps:list", "--project", PROJECT_ID, "--json"], timeout=180)
+    result = run(["firebase", "apps:list", "ANDROID", "--project", PROJECT_ID, "--json"], timeout=180)
     data = json.loads(result.stdout[result.stdout.find("{"):])
     def walk(obj):
         if isinstance(obj, dict):
