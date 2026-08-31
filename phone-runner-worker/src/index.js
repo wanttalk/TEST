@@ -79,7 +79,7 @@ async function handleDeviceRegistration(request, env) {
     deviceAuthToken = await getDeviceAuthToken(env);
     if (!deviceAuthToken || !constantTimeEqual(bearer, deviceAuthToken)) return new Response("Unauthorized", { status: 401 });
   } else {
-    if (!constantTimeEqual(bearer, env.DEVICE_PAIRING_TOKEN)) return new Response("Unauthorized", { status: 401 });
+    if (!constantTimeEqual(bearer, env.DEVICE_REGISTRATION_TOKEN)) return new Response("Unauthorized", { status: 401 });
     deviceAuthToken = randomSecret();
     await env.DEVICE_STATE.put(DEVICE_AUTH_KEY, deviceAuthToken);
   }
@@ -181,7 +181,7 @@ async function getDeviceAuthToken(env) {
 function registrationConfigError(env) {
   const kvError = kvConfigError(env);
   if (kvError) return kvError;
-  if (!env.DEVICE_PAIRING_TOKEN) return new Response("Device pairing is not configured", { status: 503 });
+  if (!env.DEVICE_REGISTRATION_TOKEN) return new Response("Device registration is not configured", { status: 503 });
   return null;
 }
 
