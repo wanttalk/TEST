@@ -55,3 +55,4 @@ jobs:
           name: phone-runner-final-debug-apk
           path: phone-runner-app/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 1
+# Trigger finalizer after Wrangler CI auth fix.
