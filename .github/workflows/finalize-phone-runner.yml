@@ -36,6 +36,7 @@ jobs:
 
       - name: Test Worker contract
         run: npm test --prefix phone-runner-worker
+        # Keep auth/deploy attempts behind a passing local contract test.
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
