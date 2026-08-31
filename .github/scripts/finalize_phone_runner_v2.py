@@ -96,50 +96,24 @@ def firebase_login(issue):
     run(["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key])
     pub = Path(public_key).read_text()
 
-    child = pexpect.spawn("firebase", ["login", "--no-localhost", "--reauth"], encoding="utf-8", timeout=180)
-    auth_url = ""
-    transcript = ""
-    while True:
-        idx = child.expect([
-            r"Allow Firebase to collect[^\n]*\?",
-            r"https://auth\.firebase\.tools/login\?[^\s]+",
-            r"Enter authorization code:",
-            r"Paste authorization code here:",
-            pexpect.EOF,
-            pexpect.TIMEOUT,
-        ])
-        transcript += child.before or ""
-        if isinstance(child.after, str):
-            transcript += child.after
-        if idx == 0:
-            child.sendline("N")
-        elif idx == 1:
-            auth_url = child.match.group(0)
-        elif idx in (2, 3):
-            if not auth_url:
-                match = re.search(r"https://auth\.firebase\.tools/login\?[^\s]+", transcript)
-                if match:
-                    auth_url = match.group(0)
-            if not auth_url:
-                raise RuntimeError("Firebase CLI did not expose authorization URL")
-            comment(issue,
-                    "GOOGLE_AUTH_REQUIRED\n\n"
-                    f"Authorize URL:\n{auth_url}\n\n"
-                    "Complete Google authorization and send the returned code only to the assistant.\n\n"
-                    "One-time encryption key:\n```pem\n" + pub.strip() + "\n```")
-            encrypted = poll_comment(issue, "GOOGLE_ENC:")
-            child.sendline(decrypt_input(encrypted, private_key))
-            child.expect(pexpect.EOF, timeout=180)
-            if child.exitstatus not in (0, None):
-                raise RuntimeError("Firebase login failed")
-            run(["firebase", "projects:list", "--json"], timeout=180)
-            comment(issue, "GOOGLE_AUTH_OK\n\nGoogle authorization completed.")
-            return
-        elif idx == 4:
-            raise RuntimeError("Firebase login exited before authorization")
-        else:
-            raise TimeoutError("Firebase login timed out")
+    env = {**os.environ, "CI": "true"}
+    result = run(["firebase", "login", "--non-interactive"], env=env, timeout=180)
+    transcript = (result.stdout or "") + "\n" + (result.stderr or "")
+    match = re.search(r"https://auth\.firebase\.tools/login\?[^\s]+", transcript)
+    if not match:
+        raise RuntimeError("Firebase CLI did not expose authorization URL")
+    auth_url = match.group(0)
 
+    comment(issue,
+            "GOOGLE_AUTH_REQUIRED\n\n"
+            f"Authorize URL:\n{auth_url}\n\n"
+            "Complete Google authorization and send the returned code only to the assistant.\n\n"
+            "One-time encryption key:\n" + pub.strip())
+    encrypted = poll_comment(issue, "GOOGLE_ENC:")
+    code = decrypt_input(encrypted, private_key)
+    run(["firebase", "login", code], env=env, timeout=180)
+    run(["firebase", "projects:list", "--json"], env=env, timeout=180)
+    comment(issue, "GOOGLE_AUTH_OK\n\nGoogle authorization completed.")
 
 def firebase_access_token():
     run(["firebase", "projects:list", "--json"], timeout=180)
