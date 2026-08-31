@@ -1,0 +1,40 @@
+name: Build Phone Runner APK
+
+on:
+  push:
+    paths:
+      - "phone-runner-app/**"
+      - ".github/workflows/build-phone-runner.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Build debug APK
+        working-directory: phone-runner-app
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: phone-runner-debug-apk
+          path: phone-runner-app/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
