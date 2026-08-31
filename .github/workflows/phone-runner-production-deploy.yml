@@ -1,9 +1,7 @@
-name: Phone Runner Production Deploy
+# Legacy workflow retained for traceability. Automatic push triggers are intentionally disabled.
+name: Phone Runner Production Deploy (manual legacy only)
 
 on:
-  push:
-    paths:
-      - ".github/workflows/phone-runner-production-deploy.yml"
   workflow_dispatch:
 
 permissions:
