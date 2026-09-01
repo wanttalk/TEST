@@ -48,7 +48,8 @@ final class DeviceRegistration {
     }
 
     static boolean isConfigured(Context context) {
-        return !getWorkerUrl(context).isEmpty() && !getAuthToken(context).isEmpty();
+        return !getWorkerUrl(context).isEmpty()
+            && (BuildConfig.PHONE_RUNNER_AUTO_ENROLL || !getAuthToken(context).isEmpty());
     }
 
     static boolean isPaired(Context context) {
@@ -59,15 +60,16 @@ final class DeviceRegistration {
         if (isPaired(context)) return;
 
         String workerUrl = BuildConfig.PHONE_RUNNER_WORKER_URL;
-        String pairingToken = BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN;
-        if (workerUrl == null || pairingToken == null
-            || workerUrl.trim().isEmpty() || pairingToken.trim().length() < 20) {
-            return;
-        }
+        if (workerUrl == null || workerUrl.trim().isEmpty()) return;
 
-        saveConfiguration(context, workerUrl, pairingToken);
+        String normalizedUrl = normalizeWorkerUrl(workerUrl);
+        if (normalizedUrl.isEmpty()) return;
+
+        prefs(context).edit()
+            .putString(KEY_WORKER_URL, normalizedUrl)
+            .remove(KEY_PAIRING_TOKEN)
+            .apply();
     }
-
 
     static void saveConfiguration(Context context, String workerUrl, String pairingToken) {
         String normalizedUrl = normalizeWorkerUrl(workerUrl);
@@ -101,7 +103,10 @@ final class DeviceRegistration {
         Context appContext = context.getApplicationContext();
         String workerUrl = getWorkerUrl(appContext);
         String authToken = getAuthToken(appContext);
-        if (workerUrl.isEmpty() || authToken.isEmpty() || fcmToken == null || fcmToken.trim().isEmpty()) {
+        if (workerUrl.isEmpty()
+            || (!BuildConfig.PHONE_RUNNER_AUTO_ENROLL && authToken.isEmpty())
+            || fcmToken == null
+            || fcmToken.trim().isEmpty()) {
             RunnerState.recordRegistration(appContext, "NOT_CONFIGURED");
             return;
         }
@@ -238,7 +243,9 @@ final class DeviceRegistration {
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.setRequestMethod("POST");
-            connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
+            if (bearerToken != null && !bearerToken.isEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
+            }
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setDoOutput(true);
 
