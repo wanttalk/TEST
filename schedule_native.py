@@ -33,7 +33,7 @@ def main() -> int:
         "/system/bin/am",
         "broadcast",
         "--user",
-        "current",
+        "0",
         "-n",
         RECEIVER,
         "-a",
