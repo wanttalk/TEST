@@ -229,12 +229,16 @@ final class UpdateChecker {
         }
 
         String toJson() {
-            return new JSONObject()
-                .put("version_code", versionCode)
-                .put("version_name", versionName)
-                .put("apk_url", apkUrl)
-                .put("sha256", sha256)
-                .toString();
+            try {
+                return new JSONObject()
+                    .put("version_code", versionCode)
+                    .put("version_name", versionName)
+                    .put("apk_url", apkUrl)
+                    .put("sha256", sha256)
+                    .toString();
+            } catch (Exception e) {
+                throw new IllegalStateException("更新資訊無法保存", e);
+            }
         }
     }
 }
