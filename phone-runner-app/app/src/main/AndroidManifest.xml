@@ -52,6 +52,14 @@
         </receiver>
 
         <receiver
+            android:name=".ScheduleCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.wanttalk.phonerunner.SET_SCHEDULE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".TermuxResultReceiver"
             android:exported="false" />
     </application>
