@@ -55,6 +55,20 @@ final class DeviceRegistration {
         return !getWorkerUrl(context).isEmpty() && !getDeviceToken(context).isEmpty();
     }
 
+    static void ensureBuiltInConfiguration(Context context) {
+        if (isPaired(context)) return;
+
+        String workerUrl = BuildConfig.PHONE_RUNNER_WORKER_URL;
+        String pairingToken = BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN;
+        if (workerUrl == null || pairingToken == null
+            || workerUrl.trim().isEmpty() || pairingToken.trim().length() < 20) {
+            return;
+        }
+
+        saveConfiguration(context, workerUrl, pairingToken);
+    }
+
+
     static void saveConfiguration(Context context, String workerUrl, String pairingToken) {
         String normalizedUrl = normalizeWorkerUrl(workerUrl);
         String normalizedToken = pairingToken == null ? "" : pairingToken.trim();
