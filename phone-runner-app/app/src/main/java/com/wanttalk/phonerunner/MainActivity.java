@@ -105,6 +105,18 @@ public final class MainActivity extends Activity {
         termuxSettings.setOnClickListener(v -> PowerPolicy.openTermuxAppSettings(this));
         content.addView(termuxSettings);
 
+        Button nativeScheduleTest = button("測試一分鐘原生排程");
+        nativeScheduleTest.setOnClickListener(v -> {
+            NativeWakeScheduler.scheduleTest(this);
+            Toast.makeText(
+                this,
+                "一分鐘原生排程已設定，請關閉螢幕等待",
+                Toast.LENGTH_LONG
+            ).show();
+            refreshStatus();
+        });
+        content.addView(nativeScheduleTest);
+
         Button test = button("測試 Termux 橋接");
         test.setOnClickListener(v -> runBridgeTest());
         content.addView(test);
