@@ -120,9 +120,11 @@ jobs:
           test -n "$version_name" && test -n "$version_code"
           tag="phone-runner-v$version_name"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apk#phone-runner.apk" --clobber
+            gh release delete-asset "$tag" app-release.apk --yes || true
+            gh release delete-asset "$tag" phone-runner.apk --yes || true
+            gh release upload "$tag" "$release_apk" --clobber
           else
-            gh release create "$tag" "$apk#phone-runner.apk"               --title "Phone Runner $version_name"               --notes "Signed Phone Runner APK release. Android will ask once for installation confirmation."
+            gh release create "$tag" "$release_apk" --title "Phone Runner $version_name" --notes "Signed Phone Runner APK release. Android will ask once for installation confirmation."
           fi
           sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
           apk_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/phone-runner.apk"
