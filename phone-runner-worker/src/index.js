@@ -79,7 +79,8 @@ async function handleDeviceRegistration(request, env) {
     deviceAuthToken = await getDeviceAuthToken(env);
     if (!deviceAuthToken || !constantTimeEqual(bearer, deviceAuthToken)) return new Response("Unauthorized", { status: 401 });
   } else {
-    if (!constantTimeEqual(bearer, env.DEVICE_REGISTRATION_TOKEN)) return new Response("Unauthorized", { status: 401 });
+    // Personal single-device mode: first registration claims an empty registry.
+    // The issued device token protects all later registration rotations and reports.
     deviceAuthToken = randomSecret();
     await env.DEVICE_STATE.put(DEVICE_AUTH_KEY, deviceAuthToken);
   }
@@ -179,10 +180,7 @@ async function getDeviceAuthToken(env) {
 }
 
 function registrationConfigError(env) {
-  const kvError = kvConfigError(env);
-  if (kvError) return kvError;
-  if (!env.DEVICE_REGISTRATION_TOKEN) return new Response("Device registration is not configured", { status: 503 });
-  return null;
+  return kvConfigError(env);
 }
 
 function kvConfigError(env) {
