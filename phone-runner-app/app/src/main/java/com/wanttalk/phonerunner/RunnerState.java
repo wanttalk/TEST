@@ -90,7 +90,7 @@ final class RunnerState {
         String registration = p.getString("registration_status", "-");
         String registrationAt = p.getString("registration_at", "-");
         boolean nativeAlarm = p.getBoolean("native_alarm_configured", false);
-        return "原生每小時排程: " + (nativeAlarm ? "SCHEDULED" : "-")
+        return "原生排程: " + (nativeAlarm ? "SCHEDULED" : "-")
             + "\n裝置登記: " + registration
             + "\n登記時間: " + registrationAt
             + "\n最後收到: " + received
