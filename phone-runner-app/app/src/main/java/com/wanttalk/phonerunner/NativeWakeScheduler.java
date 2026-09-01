@@ -11,16 +11,35 @@ final class NativeWakeScheduler {
     static final String ACTION_NATIVE_TICK =
         "com.wanttalk.phonerunner.NATIVE_TICK";
     private static final int REQUEST_CODE = 3702;
-    private static final long PERIOD_MS = 60L * 60L * 1000L;
+    private static final long DEFAULT_INTERVAL_MINUTES = 60L;
+    private static final long MIN_INTERVAL_MINUTES = 1L;
+    private static final long MAX_INTERVAL_MINUTES = 7L * 24L * 60L;
+    private static final String PREFS = "native_schedule";
+    private static final String KEY_INTERVAL_MINUTES = "interval_minutes";
 
     private NativeWakeScheduler() {}
 
     static void ensureScheduled(Context context) {
-        schedule(context, PERIOD_MS);
+        schedule(context, getIntervalMinutes(context) * 60L * 1000L);
     }
 
-    static void scheduleTest(Context context) {
-        schedule(context, 60L * 1000L);
+    static long getIntervalMinutes(Context context) {
+        return context.getApplicationContext()
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_INTERVAL_MINUTES, DEFAULT_INTERVAL_MINUTES);
+    }
+
+    static boolean scheduleMinutes(Context context, long minutes) {
+        if (minutes < MIN_INTERVAL_MINUTES || minutes > MAX_INTERVAL_MINUTES) {
+            return false;
+        }
+        Context appContext = context.getApplicationContext();
+        appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_INTERVAL_MINUTES, minutes)
+            .apply();
+        schedule(appContext, minutes * 60L * 1000L);
+        return true;
     }
 
     private static void schedule(Context context, long delayMs) {
@@ -46,7 +65,6 @@ final class NativeWakeScheduler {
         }
         RunnerState.recordNativeAlarmScheduled(appContext);
     }
-
     private static PendingIntent pendingIntent(Context context) {
         Intent intent = new Intent(context, NativeWakeReceiver.class)
             .setAction(ACTION_NATIVE_TICK);
