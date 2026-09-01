@@ -32,6 +32,8 @@ def main() -> int:
     command = [
         "/system/bin/am",
         "broadcast",
+        "--user",
+        "current",
         "-n",
         RECEIVER,
         "-a",
