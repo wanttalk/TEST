@@ -33,6 +33,10 @@ android {
         resValue 'string', 'gcm_defaultSenderId', cfg('firebase.senderId', 'FIREBASE_SENDER_ID')
         resValue 'string', 'project_id', cfg('firebase.projectId', 'FIREBASE_PROJECT_ID')
         resValue 'string', 'google_api_key', cfg('firebase.apiKey', 'FIREBASE_API_KEY')
+        buildConfigField 'String', 'PHONE_RUNNER_WORKER_URL',
+            '"https://phone-runner-wake.jawteng.workers.dev"'
+        buildConfigField 'String', 'PHONE_RUNNER_BOOTSTRAP_TOKEN',
+            '"' + cfg('phoneRunner.bootstrapToken', 'PHONE_RUNNER_BOOTSTRAP_TOKEN') + '"'
     }
 
     buildFeatures {
