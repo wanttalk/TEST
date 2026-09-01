@@ -1,6 +1,6 @@
 package com.wanttalk.phonerunner;
 
-import android.app.BroadcastReceiver;
+import android.content.BroadcastReceiver;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
