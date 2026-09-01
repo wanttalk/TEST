@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         DeviceRegistration.ensureBuiltInConfiguration(this);
+        NativeWakeScheduler.ensureScheduled(this);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(20);
