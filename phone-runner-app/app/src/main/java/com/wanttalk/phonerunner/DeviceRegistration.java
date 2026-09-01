@@ -48,7 +48,8 @@ final class DeviceRegistration {
     }
 
     static boolean isConfigured(Context context) {
-        return !getWorkerUrl(context).isEmpty() && !getAuthToken(context).isEmpty();
+        return !getWorkerUrl(context).isEmpty()
+            && (BuildConfig.PHONE_RUNNER_AUTO_ENROLL || !getAuthToken(context).isEmpty());
     }
 
     static boolean isPaired(Context context) {
@@ -101,7 +102,10 @@ final class DeviceRegistration {
         Context appContext = context.getApplicationContext();
         String workerUrl = getWorkerUrl(appContext);
         String authToken = getAuthToken(appContext);
-        if (workerUrl.isEmpty() || authToken.isEmpty() || fcmToken == null || fcmToken.trim().isEmpty()) {
+        if (workerUrl.isEmpty()
+            || (!BuildConfig.PHONE_RUNNER_AUTO_ENROLL && authToken.isEmpty())
+            || fcmToken == null
+            || fcmToken.trim().isEmpty()) {
             RunnerState.recordRegistration(appContext, "NOT_CONFIGURED");
             return;
         }
@@ -238,7 +242,9 @@ final class DeviceRegistration {
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.setRequestMethod("POST");
-            connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
+            if (bearerToken != null && !bearerToken.isEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
+            }
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setDoOutput(true);
 
