@@ -21,13 +21,15 @@ function memoryKv(initial = {}) {
   };
 }
 
-function registrationRequest({ token, deviceId, secret = "pairing-secret-1234567890" }) {
+function registrationRequest({ token, deviceId, secret = "" }) {
+  const headers = {
+    "content-type": "application/json",
+  };
+  if (secret) headers.authorization = "Bearer " + secret;
+
   return new Request("https://runner.test/register", {
     method: "POST",
-    headers: {
-      authorization: `Bearer ${secret}`,
-      "content-type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       token,
       device_id: deviceId,
@@ -111,22 +113,19 @@ test("manual wake fails closed when its secret is missing", async () => {
   assert.equal(response.status, 503);
 });
 
-test("device registration fails closed until secret and KV exist", async () => {
+test("device registration needs KV but not a pairing secret", async () => {
   const request = registrationRequest({
     token: "x".repeat(64),
     deviceId: "test-device-0001",
-    secret: "pairing-secret",
   });
 
-  const missingSecret = await worker.fetch(request.clone(), {
+  const missingKv = await worker.fetch(request.clone(), {});
+  assert.equal(missingKv.status, 503);
+
+  const first = await worker.fetch(request, {
     DEVICE_STATE: memoryKv(),
   });
-  assert.equal(missingSecret.status, 503);
-
-  const missingKv = await worker.fetch(request.clone(), {
-    DEVICE_REGISTRATION_TOKEN: "pairing-secret",
-  });
-  assert.equal(missingKv.status, 503);
+  assert.equal(first.status, 200);
 });
 
 test("device registration stores the FCM token without echoing it", async () => {
