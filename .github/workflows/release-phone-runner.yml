@@ -1,0 +1,134 @@
+name: Release Signed Phone Runner APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      firebase_application_id:
+        description: "Firebase mobilesdk_app_id (google_app_id)"
+        required: false
+        type: string
+      firebase_sender_id:
+        description: "Firebase project_number / sender ID"
+        required: false
+        type: string
+      firebase_project_id:
+        description: "Firebase project_id"
+        required: false
+        type: string
+      firebase_api_key:
+        description: "Firebase Android API key"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_APPLICATION_ID: ${{ inputs.firebase_application_id || '' }}
+      FIREBASE_SENDER_ID: ${{ inputs.firebase_sender_id || '' }}
+      FIREBASE_PROJECT_ID: ${{ inputs.firebase_project_id || '' }}
+      FIREBASE_API_KEY: ${{ inputs.firebase_api_key || '' }}
+      FIREBASE_ARTIFACT_ID: 9788133584
+      PHONE_RUNNER_SIGNING_KEYSTORE_BASE64: ${{ secrets.PHONE_RUNNER_SIGNING_KEYSTORE_BASE64 }}
+      PHONE_RUNNER_SIGNING_STORE_PASSWORD: ${{ secrets.PHONE_RUNNER_SIGNING_STORE_PASSWORD }}
+      PHONE_RUNNER_SIGNING_KEY_ALIAS: phone-runner
+      PHONE_RUNNER_SIGNING_KEY_PASSWORD: ${{ secrets.PHONE_RUNNER_SIGNING_STORE_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Recover Firebase config from previous configured APK
+        if: ${{ inputs.firebase_application_id == '' && inputs.firebase_sender_id == '' && inputs.firebase_project_id == '' && inputs.firebase_api_key == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          work_dir="$RUNNER_TEMP/firebase-artifact"
+          mkdir -p "$work_dir"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${FIREBASE_ARTIFACT_ID}/zip" > "$work_dir/artifact.zip"
+          unzip -q "$work_dir/artifact.zip" -d "$work_dir"
+          apk="$(find "$work_dir" -type f -name 'app-debug.apk' | head -n 1)"
+          analyzer="$(find "$ANDROID_HOME" -type f -name 'apkanalyzer' | head -n 1)"
+          test -s "$apk" || { echo 'FIREBASE_RECOVERY=APK_NOT_FOUND'; exit 30; }
+          test -x "$analyzer" || { echo 'FIREBASE_RECOVERY=APKANALYZER_NOT_FOUND'; exit 31; }
+          resource_value() {
+            "$analyzer" resources value --config default --type string --name "$1" "$apk" | tr -d '"' | tr -d '\r'
+          }
+          application_id="$(resource_value google_app_id)"
+          sender_id="$(resource_value gcm_defaultSenderId)"
+          project_id="$(resource_value project_id)"
+          api_key="$(resource_value google_api_key)"
+          test -n "$application_id" && test -n "$sender_id" && test -n "$project_id" && test -n "$api_key" || {
+            echo 'FIREBASE_RECOVERY=RESOURCE_MISSING'
+            exit 32
+          }
+          {
+            printf 'FIREBASE_APPLICATION_ID=%s\n' "$application_id"
+            printf 'FIREBASE_SENDER_ID=%s\n' "$sender_id"
+            printf 'FIREBASE_PROJECT_ID=%s\n' "$project_id"
+            printf 'FIREBASE_API_KEY=%s\n' "$api_key"
+          } >> "$GITHUB_ENV"
+
+      - name: Verify signing inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PHONE_RUNNER_SIGNING_KEYSTORE_BASE64"
+          test -n "$PHONE_RUNNER_SIGNING_STORE_PASSWORD"
+
+      - name: Decode stable signing keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          keystore="$RUNNER_TEMP/phone-runner-release.p12"
+          printf '%s' "$PHONE_RUNNER_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          echo "PHONE_RUNNER_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        working-directory: phone-runner-app
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Publish GitHub release and update metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="phone-runner-app/app/build/outputs/apk/release/app-release.apk"
+          test -s "$apk"
+          version_name="$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" phone-runner-app/app/build.gradle | head -n 1)"
+          version_code="$(sed -n "s/.*versionCode \([0-9][0-9]*\).*/\1/p" phone-runner-app/app/build.gradle | head -n 1)"
+          test -n "$version_name" && test -n "$version_code"
+          tag="phone-runner-v$version_name"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk#phone-runner.apk" --clobber
+          else
+            gh release create "$tag" "$apk#phone-runner.apk"               --title "Phone Runner $version_name"               --notes "Signed Phone Runner APK release. Android will ask once for installation confirmation."
+          fi
+          sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+          apk_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/phone-runner.apk"
+          metadata="$(printf '{\n  "version_code": %s,\n  "version_name": "%s",\n  "apk_url": "%s",\n  "sha256": "%s"\n}\n' "$version_code" "$version_name" "$apk_url" "$sha256")"
+          metadata_b64="$(printf '%s' "$metadata" | base64 -w 0)"
+          metadata_sha="$(gh api "/repos/$GITHUB_REPOSITORY/contents/update.json" --jq .sha 2>/dev/null || true)"
+          if [ -n "$metadata_sha" ]; then
+            gh api --method PUT "/repos/$GITHUB_REPOSITORY/contents/update.json"               -f message="chore: publish Phone Runner update metadata"               -f content="$metadata_b64"               -f sha="$metadata_sha"
+          else
+            gh api --method PUT "/repos/$GITHUB_REPOSITORY/contents/update.json"               -f message="chore: publish Phone Runner update metadata"               -f content="$metadata_b64"
+          fi
