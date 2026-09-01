@@ -18,6 +18,11 @@ def cfg = { String propertyName, String envName ->
     return value == null ? "" : value.trim()
 }
 
+def signingStoreFile = System.getenv('PHONE_RUNNER_SIGNING_STORE_FILE') ?: ''
+def signingStorePassword = System.getenv('PHONE_RUNNER_SIGNING_STORE_PASSWORD') ?: ''
+def signingKeyAlias = System.getenv('PHONE_RUNNER_SIGNING_KEY_ALIAS') ?: ''
+def signingKeyPassword = System.getenv('PHONE_RUNNER_SIGNING_KEY_PASSWORD') ?: ''
+
 android {
     namespace 'com.wanttalk.phonerunner'
     compileSdk 35
@@ -26,8 +31,8 @@ android {
         applicationId 'com.wanttalk.phonerunner'
         minSdk 26
         targetSdk 35
-        versionCode 7
-        versionName '0.2.5'
+        versionCode 8
+        versionName '0.2.6'
 
         resValue 'string', 'google_app_id', cfg('firebase.applicationId', 'FIREBASE_APPLICATION_ID')
         resValue 'string', 'gcm_defaultSenderId', cfg('firebase.senderId', 'FIREBASE_SENDER_ID')
@@ -48,6 +53,27 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    signingConfigs {
+        release {
+            if (!signingStoreFile.isEmpty()) {
+                storeFile file(signingStoreFile)
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+                storeType 'pkcs12'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (!signingStoreFile.isEmpty()) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+        }
     }
 }
 
