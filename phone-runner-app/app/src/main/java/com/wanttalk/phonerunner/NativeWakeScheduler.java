@@ -21,7 +21,7 @@ final class NativeWakeScheduler {
             (AlarmManager) appContext.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
-        PendingIntent operation = pendingIntent(appContext, false);
+        PendingIntent operation = pendingIntent(appContext);
         long triggerAt = SystemClock.elapsedRealtime() + PERIOD_MS;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setAndAllowWhileIdle(
@@ -39,10 +39,10 @@ final class NativeWakeScheduler {
         RunnerState.recordNativeAlarmScheduled(appContext);
     }
 
-    private static PendingIntent pendingIntent(Context context, boolean noCreate) {
+    private static PendingIntent pendingIntent(Context context) {
         Intent intent = new Intent(context, NativeWakeReceiver.class)
             .setAction(ACTION_NATIVE_TICK);
-        int flags = noCreate ? PendingIntent.FLAG_NO_CREATE : PendingIntent.FLAG_UPDATE_CURRENT;
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
