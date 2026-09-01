@@ -1,6 +1,5 @@
 package com.wanttalk.phonerunner;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -130,7 +129,9 @@ final class DeviceRegistration {
             context,
             "result",
             requestId,
-            err == Activity.RESULT_OK && exitCode == 0,
+            // TermuxResultReceiver normalizes Activity.RESULT_OK (-1) to 0
+            // before calling this helper so Worker receives a stable success code.
+            err == 0 && exitCode == 0,
             err,
             exitCode,
             ""
