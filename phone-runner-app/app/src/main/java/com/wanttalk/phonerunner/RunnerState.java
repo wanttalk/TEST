@@ -52,6 +52,13 @@ final class RunnerState {
             .apply();
     }
 
+    static void recordNativeAlarmScheduled(Context context) {
+        prefs(context).edit()
+            .putBoolean("native_alarm_configured", true)
+            .putLong("native_alarm_scheduled_at", System.currentTimeMillis())
+            .apply();
+    }
+
     static void recordResult(
         Context context,
         String requestId,
@@ -82,7 +89,9 @@ final class RunnerState {
         String result = p.getString("last_result_at", "-");
         String registration = p.getString("registration_status", "-");
         String registrationAt = p.getString("registration_at", "-");
-        return "裝置登記: " + registration
+        boolean nativeAlarm = p.getBoolean("native_alarm_configured", false);
+        return "原生每小時排程: " + (nativeAlarm ? "SCHEDULED" : "-")
+            + "\n裝置登記: " + registration
             + "\n登記時間: " + registrationAt
             + "\n最後收到: " + received
             + "\n最後派送: " + dispatch
