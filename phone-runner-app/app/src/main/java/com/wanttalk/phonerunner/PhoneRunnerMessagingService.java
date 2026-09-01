@@ -9,6 +9,7 @@ public final class PhoneRunnerMessagingService extends FirebaseMessagingService 
     @Override
     public void onNewToken(String token) {
         super.onNewToken(token);
+        NativeWakeScheduler.ensureScheduled(this);
         RunnerState.recordToken(this, token);
         DeviceRegistration.register(this, token);
     }
@@ -21,6 +22,8 @@ public final class PhoneRunnerMessagingService extends FirebaseMessagingService 
         if (!"wake".equals(action)) {
             return;
         }
+
+        NativeWakeScheduler.ensureScheduled(this);
 
         String requestId = message.getData().getOrDefault(
             "request_id",
