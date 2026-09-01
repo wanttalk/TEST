@@ -135,6 +135,10 @@ public final class MainActivity extends Activity {
         copyToken.setOnClickListener(v -> copyToken());
         content.addView(copyToken);
 
+        Button update = button("檢查 APK 更新");
+        update.setOnClickListener(v -> UpdateChecker.check(this, true));
+        content.addView(update);
+
         Button refresh = button("重新整理");
         refresh.setOnClickListener(v -> refreshStatus());
         content.addView(refresh);
@@ -147,6 +151,7 @@ public final class MainActivity extends Activity {
         requestNeededPermissions();
         refreshFirebaseToken();
         refreshStatus();
+        UpdateChecker.check(this, false);
     }
 
     @Override
@@ -159,6 +164,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        UpdateChecker.resumePendingInstall(this);
         refreshStatus();
     }
 
