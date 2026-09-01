@@ -75,8 +75,9 @@ public final class MainActivity extends Activity {
         savePairing.setOnClickListener(v -> savePairing());
         content.addView(savePairing);
 
-        if (BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN != null
-            && BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN.trim().length() >= 20) {
+        if (BuildConfig.PHONE_RUNNER_AUTO_ENROLL
+            || (BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN != null
+                && BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN.trim().length() >= 20)) {
             pairingTitle.setVisibility(View.GONE);
             workerUrlInput.setVisibility(View.GONE);
             registrationTokenInput.setVisibility(View.GONE);
@@ -261,7 +262,9 @@ public final class MainActivity extends Activity {
         statusView.setText(
             "Firebase: " + mark(firebase)
                 + "\nFCM Token: " + mark(hasToken)
-                + "\nWorker 配對資料: " + mark(pairingConfigured)
+                + "\n" + (BuildConfig.PHONE_RUNNER_AUTO_ENROLL
+                    ? "Worker 自動設定"
+                    : "Worker 配對資料") + ": " + mark(pairingConfigured)
                 + "\n裝置專用密鑰: " + mark(paired)
                 + "\n裝置已登記: " + mark(registered)
                 + "\nTermux: " + mark(termux)
