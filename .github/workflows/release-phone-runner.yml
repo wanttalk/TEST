@@ -113,6 +113,8 @@ jobs:
           set -euo pipefail
           apk="phone-runner-app/app/build/outputs/apk/release/app-release.apk"
           test -s "$apk"
+          release_apk="$RUNNER_TEMP/phone-runner.apk"
+          cp "$apk" "$release_apk"
           version_name="$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" phone-runner-app/app/build.gradle | head -n 1)"
           version_code="$(sed -n "s/.*versionCode \([0-9][0-9]*\).*/\1/p" phone-runner-app/app/build.gradle | head -n 1)"
           test -n "$version_name" && test -n "$version_code"
