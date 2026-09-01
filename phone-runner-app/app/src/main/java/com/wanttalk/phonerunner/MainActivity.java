@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,6 +32,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        DeviceRegistration.ensureBuiltInConfiguration(this);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(20);
@@ -72,6 +74,14 @@ public final class MainActivity extends Activity {
         Button savePairing = button("儲存配對並登記這支手機");
         savePairing.setOnClickListener(v -> savePairing());
         content.addView(savePairing);
+
+        if (BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN != null
+            && BuildConfig.PHONE_RUNNER_BOOTSTRAP_TOKEN.trim().length() >= 20) {
+            pairingTitle.setVisibility(View.GONE);
+            workerUrlInput.setVisibility(View.GONE);
+            registrationTokenInput.setVisibility(View.GONE);
+            savePairing.setVisibility(View.GONE);
+        }
 
         Button permission = button("授權通知與 Termux");
         permission.setOnClickListener(v -> requestNeededPermissions());
