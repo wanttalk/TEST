@@ -28,6 +28,7 @@ public final class MainActivity extends Activity {
     private TextView statusView;
     private EditText workerUrlInput;
     private EditText registrationTokenInput;
+    private EditText scheduleMinutesInput;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -52,6 +53,23 @@ public final class MainActivity extends Activity {
         );
         statusParams.setMargins(0, dp(18), 0, dp(18));
         content.addView(statusView, statusParams);
+
+        TextView scheduleTitle = new TextView(this);
+        scheduleTitle.setText("原生排程（由手機端決定）");
+        scheduleTitle.setTextSize(18);
+        content.addView(scheduleTitle);
+
+        scheduleMinutesInput = new EditText(this);
+        scheduleMinutesInput.setHint("每隔幾分鐘喚醒（1–10080）");
+        scheduleMinutesInput.setSingleLine(true);
+        scheduleMinutesInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        scheduleMinutesInput.setText(String.valueOf(NativeWakeScheduler.getIntervalMinutes(this)));
+        content.addView(scheduleMinutesInput);
+
+        Button schedule = button("儲存並設定原生排程");
+        schedule.setOnClickListener(v -> scheduleNativeAlarm());
+        content.addView(schedule);
+
 
         TextView pairingTitle = new TextView(this);
         pairingTitle.setText("一次性配對");
@@ -230,6 +248,25 @@ public final class MainActivity extends Activity {
         refreshStatus();
     }
 
+    private void scheduleNativeAlarm() {
+        String value = scheduleMinutesInput.getText().toString().trim();
+        try {
+            long minutes = Long.parseLong(value);
+            if (!NativeWakeScheduler.scheduleMinutes(this, minutes)) {
+                Toast.makeText(this, "請輸入 1–10080 的分鐘數", Toast.LENGTH_LONG).show();
+                return;
+            }
+            Toast.makeText(
+                this,
+                "已設定每 " + minutes + " 分鐘原生喚醒",
+                Toast.LENGTH_LONG
+            ).show();
+            refreshStatus();
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "請輸入有效的分鐘數", Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void recordManualFailure(String requestId, Exception e) {
         RunnerState.recordDispatch(this, requestId, "FAILED: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -285,6 +322,7 @@ public final class MainActivity extends Activity {
                 + "\n通知權限: " + mark(notificationPermission)
                 + "\nPhone Runner 電池不受限: " + mark(batteryExempt)
                 + "\n裝置廠牌: " + (PowerPolicy.isXiaomiFamily() ? "Xiaomi/Redmi/POCO" : Build.MANUFACTURER)
+                + "\n原生排程間隔: " + NativeWakeScheduler.getIntervalMinutes(this) + " 分鐘"
                 + "\n\n" + RunnerState.summary(this)
                 + "\n\nTermux 另需設定 allow-external-apps=true，並建議將 Termux 電池使用設為不限制。"
         );
