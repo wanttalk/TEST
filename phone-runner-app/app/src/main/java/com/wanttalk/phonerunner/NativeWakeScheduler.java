@@ -16,13 +16,21 @@ final class NativeWakeScheduler {
     private NativeWakeScheduler() {}
 
     static void ensureScheduled(Context context) {
+        schedule(context, PERIOD_MS);
+    }
+
+    static void scheduleTest(Context context) {
+        schedule(context, 60L * 1000L);
+    }
+
+    private static void schedule(Context context, long delayMs) {
         Context appContext = context.getApplicationContext();
         AlarmManager alarmManager =
             (AlarmManager) appContext.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
         PendingIntent operation = pendingIntent(appContext);
-        long triggerAt = SystemClock.elapsedRealtime() + PERIOD_MS;
+        long triggerAt = SystemClock.elapsedRealtime() + delayMs;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
