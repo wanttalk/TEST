@@ -1,10 +1,6 @@
 name: Build Phone Runner APK
 
 on:
-  push:
-    paths:
-      - "phone-runner-app/**"
-      - ".github/workflows/build-phone-runner.yml"
   workflow_dispatch:
     inputs:
       firebase_application_id:
