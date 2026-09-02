@@ -10,6 +10,7 @@
 - 後續 AI 負責把設定寫入正式控制流程、送到手機並回報結果；使用者不需要複製 FCM token、不需要貼 GitHub 內容、不需要重新配對。
 - 正式遠端流程為：GitHub `remote_request.json` → GitHub Webhook → Cloudflare Worker → FCM → APK → Termux → `phone_tick.sh` → GitHub 回報。
 - 原生排程由 APK 直接設定 Android AlarmManager。Termux 不再負責透過 `am broadcast` 設定排程；這是因為 Xiaomi/MIUI 會拒絕 Termux UID 的跨使用者廣播。
+- 遠端排程的 `remote_request.json` commit message 必須包含 `runner_schedule_set`、`interval_minutes=<分鐘>` 與 `request_id=<請求ID>`。Worker 會解析這些欄位後送出 FCM `action=schedule_set`；若缺少標記，會被當成普通 `wake`，在 Xiaomi 上可能誤走已淘汰的 Termux `am broadcast` 路徑並出現 `EXIT_255`。
 - 使用者只需要在 APK 看到結果；除非本手冊列出按鈕，否則不要自行操作。
 
 ## 二、手機「重新開機」後
@@ -43,13 +44,14 @@
 2. 若出現下載確認，按下載／繼續。
 3. Android 安裝畫面出現後，只按一次 **安裝** 或 **更新**。
 4. 安裝完成後按 **開啟**，或回到桌面開啟 **Android Phone Runner**。
-5. 依序查看狀態：
+5. 不需重新配對、不需複製 FCM token；只有紅色狀態才處理對應設定。
+6. 依序查看狀態：
    - **授權通知與 TERMUX**：只有通知或 Termux 狀態為紅色才按，並接受系統提示。
    - **允許 PHONE RUNNER 背景執行**：只有背景／電池狀態為紅色才按。
    - **開啟小米自啟動／背景設定**：只有 Xiaomi 自啟動或背景狀態為紅色才按。
    - **開啟 TERMUX 系統設定**：只有 Termux 狀態為紅色才按；確認 `allow-external-apps=true)，並把 Termux 電池設為不受限制。
-6. 按 **測試 TERMUX 橋接**。
-7. 按 **重新整理**，確認裝置仍顯示 `REGISTERED) 且狀態燈為綠色。
+7. 按 **測試 TERMUX 橋接**。
+8. 按 **重新整理**，確認裝置仍顯示 `REGISTERED) 且狀態燈為綠色。
 
 ### 不要做
 
@@ -105,7 +107,8 @@
 ## 六、測試與完成判定
 
 - 安全測試只使用 `runner_check`、排程狀態與橋接檢查，不執行 Facebook 或 Telegram 業務任務。
-- 排程測試要看到 GitHub Issue 回報 `SCHEDULE_SET` 或等價的 PASS，並觀察至少三輪 `runner_check`。
+- 排程測試要看到 GitHub Issue 回報 `SCHEDULE_SET` 或等價的 PASS，並觀察至少三輪 `runner_check`；只有 Worker 回應 `action=schedule_set` 而沒有手機回報時，不能算排程通過。
 - 螢幕關閉測試期間，使用者只需依本對話指示關閉螢幕；不要自行重新安裝或重配對。
+- 畫面全綠與 `REGISTERED` 只代表設定與註冊成功，不代表 APK 已載入新版直接排程 handler；目前 App 畫面不顯示版本，必要時以 **檢查 APK 更新** 確認 v0.2.7。
 - 沒有取得手機實際螢幕／Doze 狀態遙測前，只能宣稱「背景喚醒多輪 PASS」，不能宣稱完整 Doze PASS。
 - 正式業務驗收必須在安全排程驗收完成後才進行。
