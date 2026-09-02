@@ -52,6 +52,10 @@ final class TermuxCommandClient {
         dispatch(context, requestId, new String[]{RUNNER_SCRIPT});
     }
 
+    static void dispatchAppliedSchedule(Context context, String requestId) {
+        dispatch(context, requestId, new String[]{RUNNER_SCRIPT, "--schedule-applied"});
+    }
+
     static void dispatchHealthCheck(Context context, String requestId) {
         dispatch(context, requestId, new String[]{"-lc", "printf 'PHONE_RUNNER_BRIDGE_OK\\n'"});
     }
