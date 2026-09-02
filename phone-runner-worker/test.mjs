@@ -345,3 +345,69 @@ test("manual wake reads KV token, creates OAuth JWT, then sends direct high-prio
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("GitHub schedule commit sends a direct APK schedule command", async () => {
+  const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  const secret = "schedule-webhook-secret";
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    if (String(url) === "https://oauth2.googleapis.com/token") {
+      return new Response(JSON.stringify({
+        access_token: "schedule-test-access-token",
+        expires_in: 3600,
+      }), { status: 200 });
+    }
+    if (String(url).includes("fcm.googleapis.com")) {
+      return new Response(JSON.stringify({ name: "projects/test/messages/schedule" }), { status: 200 });
+    }
+    throw new Error("Unexpected fetch " + url);
+  };
+
+  try {
+    const body = JSON.stringify({
+      repository: { full_name: "wanttalk/android-phone-runner" },
+      head_commit: {
+        message: "phone-runner: runner_schedule_set interval_minutes=1 request_id=schedule-test-1",
+      },
+      commits: [{ modified: ["remote_request.json"] }],
+    });
+    const response = await worker.fetch(new Request("https://runner.test/github", {
+      method: "POST",
+      headers: {
+        "x-github-event": "push",
+        "x-hub-signature-256": githubSignature(secret, body),
+        "x-github-delivery": "delivery-schedule-test",
+      },
+      body,
+    }), {
+      GITHUB_WEBHOOK_SECRET: secret,
+      FIREBASE_PROJECT_ID: "test-project",
+      FIREBASE_CLIENT_EMAIL: "runner@test-project.iam.gserviceaccount.com",
+      FIREBASE_PRIVATE_KEY: privateKeyPem,
+      DEVICE_STATE: memoryKv({ fcm_token: "schedule-device-token" }),
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      ok: true,
+      wake: "schedule-test-1",
+      action: "schedule_set",
+    });
+
+    const fcmCall = calls.find((call) => call.url.includes("fcm.googleapis.com"));
+    assert.ok(fcmCall);
+    const fcm = JSON.parse(fcmCall.options.body);
+    assert.deepEqual(fcm.message.data, {
+      action: "schedule_set",
+      interval_minutes: "1",
+      request_id: "schedule-test-1",
+      source: "github",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
