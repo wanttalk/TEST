@@ -371,7 +371,7 @@ test("GitHub schedule commit sends a direct APK schedule command", async () => {
     const body = JSON.stringify({
       repository: { full_name: "wanttalk/android-phone-runner" },
       head_commit: {
-        message: "phone-runner: runner_schedule_set interval_minutes=1 request_id=schedule-test-1",
+        message: "test: apply runner_schedule_set interval_minutes=1 request_id=schedule-test-1",
       },
       commits: [{ modified: ["remote_request.json"] }],
     });
