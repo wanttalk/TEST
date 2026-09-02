@@ -61,10 +61,10 @@ function parseScheduleCommit(payload) {
   const message = typeof payload?.head_commit?.message === "string"
     ? payload.head_commit.message.trim()
     : "";
-  if (!/\\brunner_schedule_set\\b/i.test(message)) return null;
+  if (!/\brunner_schedule_set\b/i.test(message)) return null;
 
-  const intervalMatch = /\\binterval_minutes=(\\d+)\\b/i.exec(message);
-  const requestMatch = /\\brequest_id=(\\S+)/i.exec(message);
+  const intervalMatch = /\binterval_minutes=(\d+)\b/i.exec(message);
+  const requestMatch = /\brequest_id=(\S+)/i.exec(message);
   if (!intervalMatch || !requestMatch) return null;
 
   const intervalMinutes = Number(intervalMatch[1]);
