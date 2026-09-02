@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from urllib.parse import urlencode
@@ -28,6 +29,10 @@ def main() -> int:
     if minutes < MINUTES_MIN or minutes > MINUTES_MAX:
         print(f"INVALID_SCHEDULE_REQUEST: interval_minutes must be {MINUTES_MIN}..{MINUTES_MAX}")
         return 2
+
+    if os.environ.get("PHONE_SCHEDULE_ALREADY_APPLIED") == "1":
+        print(f"SCHEDULE_SET interval_minutes={minutes}")
+        return 0
 
     command = [
         "/system/bin/am",
