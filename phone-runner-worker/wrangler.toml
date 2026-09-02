@@ -2,5 +2,8 @@ name = "phone-runner-wake"
 main = "src/index.js"
 compatibility_date = "2026-08-31"
 
+[triggers]
+crons = ["30 * * * *"]
+
 [[kv_namespaces]]
 binding = "DEVICE_STATE"

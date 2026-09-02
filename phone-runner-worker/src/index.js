@@ -27,6 +27,11 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") return handleHealth(env);
     return new Response("Not found", { status: 404 });
   },
+
+  scheduled(controller, env, ctx) {
+    const requestId = `cron-${controller.scheduledTime}`;
+    ctx.waitUntil(sendWake(env, requestId, "cron"));
+  },
 };
 
 async function handleGithubWebhook(request, env) {

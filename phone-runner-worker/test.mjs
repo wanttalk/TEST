@@ -411,3 +411,50 @@ test("GitHub schedule commit sends a direct APK schedule command", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("scheduled cron sends a direct high-priority FCM wake", async () => {
+  const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  const calls = [];
+  const waits = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    if (String(url) === "https://oauth2.googleapis.com/token") {
+      return new Response(JSON.stringify({ access_token: "cron-test-access-token", expires_in: 3600 }), { status: 200 });
+    }
+    if (String(url).includes("fcm.googleapis.com")) {
+      return new Response(JSON.stringify({ name: "projects/test/messages/cron" }), { status: 200 });
+    }
+    throw new Error("Unexpected fetch " + url);
+  };
+
+  try {
+    const scheduledTime = 1788320000000;
+    await worker.scheduled(
+      { scheduledTime },
+      {
+        FIREBASE_PROJECT_ID: "test-project",
+        FIREBASE_CLIENT_EMAIL: "runner@test-project.iam.gserviceaccount.com",
+        FIREBASE_PRIVATE_KEY: privateKeyPem,
+        DEVICE_STATE: memoryKv({ fcm_token: "cron-device-token" }),
+      },
+      { waitUntil(promise) { waits.push(promise); } },
+    );
+
+    assert.equal(waits.length, 1);
+    await Promise.all(waits);
+    const fcmCall = calls.find((call) => call.url.includes("fcm.googleapis.com"));
+    assert.ok(fcmCall);
+    const fcm = JSON.parse(fcmCall.options.body);
+    assert.equal(fcm.message.token, "cron-device-token");
+    assert.equal(fcm.message.android.priority, "HIGH");
+    assert.deepEqual(fcm.message.data, {
+      action: "wake",
+      request_id: `cron-${scheduledTime}`,
+      source: "cron",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
