@@ -61,11 +61,14 @@ function parseScheduleCommit(payload) {
   const message = typeof payload?.head_commit?.message === "string"
     ? payload.head_commit.message.trim()
     : "";
-  const match = /^phone-runner:\s+runner_schedule_set\s+interval_minutes=(\d+)\s+request_id=(\S+)$/i.exec(message);
-  if (!match) return null;
+  if (!/\\brunner_schedule_set\\b/i.test(message)) return null;
 
-  const intervalMinutes = Number(match[1]);
-  const requestId = match[2].slice(0, 220);
+  const intervalMatch = /\\binterval_minutes=(\\d+)\\b/i.exec(message);
+  const requestMatch = /\\brequest_id=(\\S+)/i.exec(message);
+  if (!intervalMatch || !requestMatch) return null;
+
+  const intervalMinutes = Number(intervalMatch[1]);
+  const requestId = requestMatch[1].replace(/[,);.]+$/g, "").slice(0, 220);
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1 || intervalMinutes > 10080) return null;
   if (!requestId) return null;
   return { intervalMinutes, requestId };
