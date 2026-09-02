@@ -19,6 +19,10 @@ public final class PhoneRunnerMessagingService extends FirebaseMessagingService 
         super.onMessageReceived(message);
 
         String action = message.getData().getOrDefault("action", "");
+        if ("schedule_set".equals(action)) {
+            handleScheduleSet(message);
+            return;
+        }
         if (!"wake".equals(action)) {
             return;
         }
@@ -86,5 +90,71 @@ public final class PhoneRunnerMessagingService extends FirebaseMessagingService 
                 e.getClass().getSimpleName() + ": " + e.getMessage()
             );
         }
+    }
+
+    private void handleScheduleSet(RemoteMessage message) {
+        NativeWakeScheduler.ensureScheduled(this);
+
+        String requestId = message.getData().getOrDefault(
+            "request_id",
+            "schedule-" + System.currentTimeMillis()
+        );
+        if (RunnerState.isDuplicate(this, requestId)) {
+            return;
+        }
+
+        String priority = message.getPriority() == RemoteMessage.PRIORITY_HIGH
+            ? "HIGH"
+            : "NORMAL";
+        RunnerState.recordReceived(this, requestId, priority);
+        DeviceRegistration.reportPhase(this, "received", requestId, priority);
+
+        long minutes;
+        try {
+            minutes = Long.parseLong(
+                message.getData().getOrDefault("interval_minutes", "")
+            );
+        } catch (NumberFormatException e) {
+            recordScheduleFailure(requestId, priority, "invalid interval");
+            return;
+        }
+
+        if (!NativeWakeScheduler.scheduleMinutes(this, minutes)) {
+            recordScheduleFailure(requestId, priority, "interval must be 1-10080 minutes");
+            return;
+        }
+
+        RunnerState.recordDispatch(
+            this,
+            requestId,
+            "SCHEDULE_SET interval=" + minutes + "m"
+        );
+        DeviceRegistration.reportPhase(this, "dispatched", requestId, priority);
+        NotificationHelper.show(
+            this,
+            "Phone Runner",
+            "已套用對話排程：每 " + minutes + " 分鐘"
+        );
+
+        try {
+            TermuxCommandClient.dispatchAppliedSchedule(this, requestId);
+        } catch (Exception e) {
+            RunnerState.recordDispatch(
+                this,
+                requestId,
+                "SCHEDULE_SET interval=" + minutes + "m ACK_FAILED"
+            );
+            NotificationHelper.show(
+                this,
+                "Phone Runner",
+                "排程已設定，但測試回報未送到 Termux"
+            );
+        }
+    }
+
+    private void recordScheduleFailure(String requestId, String priority, String reason) {
+        RunnerState.recordDispatch(this, requestId, "SCHEDULE_FAILED: " + reason);
+        DeviceRegistration.reportPhase(this, "dispatch_failed", requestId, priority);
+        NotificationHelper.show(this, "Phone Runner", "對話排程無效：" + reason);
     }
 }
