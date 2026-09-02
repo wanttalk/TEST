@@ -43,9 +43,32 @@ async function handleGithubWebhook(request, env) {
     return paths.includes(WATCHED_PATH);
   });
   if (!touched) return json({ ok: true, ignored: "path" });
-  const requestId = request.headers.get("x-github-delivery") || payload.after || crypto.randomUUID();
+  const deliveryId = request.headers.get("x-github-delivery") || payload.after || crypto.randomUUID();
+  const schedule = parseScheduleCommit(payload);
+  const requestId = schedule?.requestId || deliveryId;
+  if (schedule) {
+    await sendWake(env, requestId, "github", {
+      action: "schedule_set",
+      interval_minutes: String(schedule.intervalMinutes),
+    });
+    return json({ ok: true, wake: requestId, action: "schedule_set" });
+  }
   await sendWake(env, requestId, "github");
-  return json({ ok: true, wake: requestId });
+  return json({ ok: true, wake: requestId, action: "wake" });
+}
+
+function parseScheduleCommit(payload) {
+  const message = typeof payload?.head_commit?.message === "string"
+    ? payload.head_commit.message.trim()
+    : "";
+  const match = /^phone-runner:\s+runner_schedule_set\s+interval_minutes=(\d+)\s+request_id=(\S+)$/i.exec(message);
+  if (!match) return null;
+
+  const intervalMinutes = Number(match[1]);
+  const requestId = match[2].slice(0, 220);
+  if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1 || intervalMinutes > 10080) return null;
+  if (!requestId) return null;
+  return { intervalMinutes, requestId };
 }
 
 async function handleManualWake(request, env) {
@@ -142,7 +165,7 @@ async function handleHealth(env) {
   });
 }
 
-async function sendWake(env, requestId, source) {
+async function sendWake(env, requestId, source, data = { action: "wake" }) {
   requireSecret(env.FIREBASE_PROJECT_ID, "FIREBASE_PROJECT_ID");
   requireSecret(env.FIREBASE_CLIENT_EMAIL, "FIREBASE_CLIENT_EMAIL");
   requireSecret(env.FIREBASE_PRIVATE_KEY, "FIREBASE_PRIVATE_KEY");
@@ -152,7 +175,7 @@ async function sendWake(env, requestId, source) {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
-    body: JSON.stringify({ message: { token: deviceToken, data: { action: "wake", request_id: requestId, source }, android: { priority: "HIGH", ttl: "60s" } } }),
+    body: JSON.stringify({ message: { token: deviceToken, data: { ...data, request_id: requestId, source }, android: { priority: "HIGH", ttl: "60s" } } }),
   });
   if (!response.ok) throw new Error(`FCM ${response.status}: ${(await response.text()).slice(0, 500)}`);
 }
