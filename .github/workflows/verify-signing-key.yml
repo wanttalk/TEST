@@ -1,0 +1,48 @@
+name: Verify Phone Runner signing key
+
+# 唯讀檢查：還原後的簽名 secrets 是否仍存在，且與已發布 v0.2.7 的簽名者相同。
+# 只輸出憑證 SHA-256 指紋（公開資訊，任何人都能從 APK 讀到），不輸出金鑰或密碼。
+on:
+  push:
+    branches: [claude/exciting-faraday-kzw71a]
+    paths: [.github/workflows/verify-signing-key.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.PHONE_RUNNER_SIGNING_KEYSTORE_BASE64 }}
+      STORE_PASSWORD: ${{ secrets.PHONE_RUNNER_SIGNING_STORE_PASSWORD }}
+    steps:
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Compare signer fingerprints
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo "keystore_secret_present=$([ -n "$KEYSTORE_B64" ] && echo yes || echo no)"
+          echo "password_secret_present=$([ -n "$STORE_PASSWORD" ] && echo yes || echo no)"
+          [ -n "$KEYSTORE_B64" ] && [ -n "$STORE_PASSWORD" ] || { echo "RESULT: SECRETS_MISSING"; exit 1; }
+          ks="$RUNNER_TEMP/k.p12"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$ks"
+          key_fp="$(keytool -list -v -storetype pkcs12 -keystore "$ks" -storepass:env STORE_PASSWORD -alias phone-runner 2>&1 \
+            | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':' | tr 'A-F' 'a-f' | head -1)"
+          rm -f "$ks"
+          echo "keystore_sha256=${key_fp:-UNREADABLE}"
+          curl -fsSL -o "$RUNNER_TEMP/r.apk" \
+            https://github.com/wanttalk/TEST/releases/download/phone-runner-v0.2.7/phone-runner.apk
+          apksigner="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          apk_fp="$("$apksigner" verify --print-certs "$RUNNER_TEMP/r.apk" \
+            | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)"
+          echo "released_v027_sha256=${apk_fp:-UNREADABLE}"
+          if [ -n "$key_fp" ] && [ "$key_fp" = "$apk_fp" ]; then
+            echo "RESULT: SIGNER_MATCH"
+          else
+            echo "RESULT: SIGNER_MISMATCH"
+            exit 1
+          fi
