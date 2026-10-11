@@ -1,0 +1,16 @@
+name: 新任務
+description: 建立一個要交給 Claude Code 的開發任務
+labels: ["status:todo"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目標
+      description: 想做什麼、做到什麼程度算完成
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: 專案 repo
+      description: 例如 wanttalk/shop（不確定可留白）
