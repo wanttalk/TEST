@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16213a">
+<title>好眠六週</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600&display=swap">
+<style>
+/* Layout: one narrow column like a clinic sleep log, fixed bottom tab bar on phones. */
+:root {
+  --bg: #edf1f6;
+  --surface: #ffffff;
+  --surface-2: #f5f7fb;
+  --ink: #16213a;
+  --muted: #56637d;
+  --line: #d4dbe6;
+  --accent: #3446a8;
+  --accent-ink: #ffffff;
+  --sleep: #2f4c86;
+  --bed: #c3cee0;
+  --good: #23764a;
+  --warn: #9a5d00;
+  --bad: #b03636;
+  --good-bg: #e3f2e9;
+  --warn-bg: #fbf0dc;
+  --bad-bg: #f9e3e3;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1322; --surface: #161f33; --surface-2: #1c2740; --ink: #e5eaf4; --muted: #9ba7bf;
+    --line: #2b3753; --accent: #a3b2ff; --accent-ink: #0d1322; --sleep: #86a6e6; --bed: #34415f;
+    --good: #6cc995; --warn: #e8b157; --bad: #f08a8a; --good-bg: #173326; --warn-bg: #3a2d14; --bad-bg: #3b1d22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1322; --surface: #161f33; --surface-2: #1c2740; --ink: #e5eaf4; --muted: #9ba7bf;
+  --line: #2b3753; --accent: #a3b2ff; --accent-ink: #0d1322; --sleep: #86a6e6; --bed: #34415f;
+  --good: #6cc995; --warn: #e8b157; --bad: #f08a8a; --good-bg: #173326; --warn-bg: #3a2d14; --bad-bg: #3b1d22;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+}
+.wrap { max-width: 680px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 104px; display: grid; gap: 18px; }
+header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 8px; }
+.brand { font-family: var(--font-display); font-size: 22px; letter-spacing: .04em; margin: 0; }
+.store { font-size: 12px; color: var(--muted); }
+h2 { font-family: var(--font-display); font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; font-weight: 700; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 12px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
+.hero { padding: 20px 16px; gap: 6px; }
+.window { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.window .t { font-family: var(--font-num); font-size: 40px; line-height: 1.1; letter-spacing: -.02em; }
+.window .arrow { color: var(--muted); font-size: 22px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; }
+.stat .v { font-family: var(--font-num); font-size: 20px; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.callout { border-left: 4px solid var(--accent); background: var(--surface-2); padding: 12px 14px; border-radius: 0 8px 8px 0; display: grid; gap: 8px; }
+.callout.warn { border-color: var(--warn); background: var(--warn-bg); }
+.callout.bad { border-color: var(--bad); background: var(--bad-bg); }
+.callout.good { border-color: var(--good); background: var(--good-bg); }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+button, .btn {
+  font: inherit; font-size: 14px; font-weight: 500; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.danger { color: var(--bad); border-color: var(--bad); }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select, textarea {
+  font: inherit; font-size: 15px; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
+}
+input[type="time"], input[type="number"], input[type="date"] { font-family: var(--font-num); }
+textarea { min-height: 70px; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 420px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink); padding: 6px 0; }
+.check input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--accent); }
+.checks { display: grid; gap: 2px; }
+.score { font-family: var(--font-num); font-size: 28px; }
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+}
+nav.tabs button { border: 0; background: none; padding: 8px 2px; font-size: 13px; color: var(--muted); border-radius: 8px; }
+nav.tabs button[aria-current="page"] { color: var(--accent); background: var(--surface-2); font-weight: 700; }
+.list { display: grid; gap: 0; }
+.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .d { font-family: var(--font-num); font-size: 14px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 500; }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: var(--font-num); font-size: 11px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+details.lesson { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+details.lesson > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+details.lesson > summary::-webkit-details-marker { display: none; }
+details.lesson .wk { font-family: var(--font-num); font-size: 12px; color: var(--muted); width: 3.2em; }
+details.lesson .body { padding: 0 16px 16px; display: grid; gap: 12px; }
+details.lesson .body ul, details.lesson .body ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.evidence { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+.pacer { display: grid; place-items: center; gap: 10px; padding: 12px 0; }
+.orb { width: 120px; height: 120px; border-radius: 50%; background: var(--sleep); opacity: .85; transform: scale(.6); transition-property: transform; transition-timing-function: ease-in-out; }
+.orb.in { transform: scale(1); transition-duration: 4s; }
+.orb.out { transform: scale(.6); transition-duration: 6s; }
+@media (prefers-reduced-motion: reduce) { .orb { transition: none !important; } }
+.cue { font-size: 18px; font-weight: 500; }
+.tip { position: fixed; z-index: 9; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 6px 8px; border-radius: 6px; max-width: 220px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 10; background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); }
+.modal { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .45); display: grid; place-items: center; padding: 16px; }
+.modal .panel { width: min(560px, 100%); max-height: 85vh; overflow: auto; }
+.modal textarea { min-height: 240px; font-family: var(--font-num); font-size: 12px; }
+.err { color: var(--bad); font-size: 13px; }
+a { color: var(--accent); }
+.sources li { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">好眠六週</h1>
+    <span class="store" id="store">本機儲存</span>
+  </header>
+  <main id="main" class="stack"></main>
+</div>
+<nav class="tabs" id="tabs" hidden>
+  <button type="button" data-tab="today">今天</button>
+  <button type="button" data-tab="diary">日記</button>
+  <button type="button" data-tab="trends">趨勢</button>
+  <button type="button" data-tab="learn">課程</button>
+  <button type="button" data-tab="settings">設定</button>
+</nav>
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<div class="modal" id="modal" hidden></div>
+
+<script>
+"use strict";
+/* ---------- constants ---------- */
+const LS_KEY = "sleep-cbti.v1";
+const MIN_WINDOW = 330;   // 5.5 h: conservative floor for self-guided use (clinics commonly use 5 h)
+const MAX_WINDOW = 540;   // 9 h
+const BASELINE_NIGHTS = 7;
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const clone = o => JSON.parse(JSON.stringify(o));
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function todayISO() { return iso(new Date()); }
+function parseISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function addDays(s, n) { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); }
+function daysBetween(a, b) {
+  const pa = a.split("-").map(Number), pb = b.split("-").map(Number);
+  return Math.round((Date.UTC(pb[0], pb[1] - 1, pb[2]) - Date.UTC(pa[0], pa[1] - 1, pa[2])) / 864e5);
+}
+function toMin(t) { if (!t) return null; const [h, m] = t.split(":").map(Number); return h * 60 + m; }
+function fromMin(m) { m = ((Math.round(m) % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
+/* minutes since 12:00 of the evening before, so a night never wraps */
+function rel(t) { const m = toMin(t); return m < 720 ? m + 720 : m - 720; }
+function hm(min) { if (min == null || isNaN(min)) return "—"; min = Math.round(min); return Math.floor(min / 60) + ":" + pad(min % 60); }
+function dur(min) {
+  if (min == null || isNaN(min)) return "—";
+  min = Math.round(min); const h = Math.floor(min / 60), m = min % 60;
+  return h ? h + " 小時" + (m ? " " + m + " 分" : "") : m + " 分";
+}
+const round15 = m => Math.round(m / 15) * 15;
+function md(s) { const d = parseISO(s); return (d.getMonth() + 1) + "/" + d.getDate(); }
+function wd(s) { return "日一二三四五六"[parseISO(s).getDay()]; }
+function pct(x) { return x == null ? "—" : Math.round(x) + "%"; }
+
+/* ---------- state ---------- */
+function blank() { return { v: 1, profile: null, diary: {} }; }
+let state = blank();
+let view = "today";
+let editing = null;          // date of diary entry being edited
+let pendingDelete = null;
+let pendingReset = false;
+let screenDraft = null;
+
+function loadLocal() {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) { const s = JSON.parse(raw); if (s && s.diary) return s; } } catch (e) {}
+  return null;
+}
+function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* cloud: each viewer's own private subtree data/users/<id>/ in the artifact db */
+let cloud = null;
+let chain = Promise.resolve();
+function enqueue(fn) {
+  chain = chain.then(fn).catch(e => toast("同步失敗：" + (e && e.code ? e.code : "請稍後再試") + "，資料仍保存在這台裝置"));
+  return chain;
+}
+let profileTimer = null;
+function saveProfile() {
+  saveLocal();
+  if (!cloud) return;
+  clearTimeout(profileTimer);
+  profileTimer = setTimeout(() => enqueue(() => cloud.col.doc("profile").set(clone(state.profile))), 500);
+}
+function saveEntry(date) {
+  saveLocal();
+  if (cloud) enqueue(() => cloud.col.doc("n-" + date).set(clone(state.diary[date])));
+}
+function removeEntry(date) {
+  saveLocal();
+  if (cloud) enqueue(() => cloud.col.doc("n-" + date).delete());
+}
+function uploadAll() {
+  if (!cloud) return;
+  if (state.profile) enqueue(() => cloud.col.doc("profile").set(clone(state.profile)));
+  Object.keys(state.diary).forEach(d => enqueue(() => cloud.col.doc("n-" + d).set(clone(state.diary[d]))));
+}
+async function initCloud() {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const uid = await user.id();
+    if (!uid) return;
+    const col = db.collection("data/users/" + uid);
+    const snap = await col.get();
+    const s = blank();
+    snap.docs.forEach(d => {
+      const body = clone(d.data() || {});
+      if (d.id === "profile") s.profile = body;
+      else if (d.id.startsWith("n-")) s.diary[d.id.slice(2)] = body;
+    });
+    cloud = { db, uid, col };
+    const cloudEmpty = !s.profile && !Object.keys(s.diary).length;
+    const localHas = state.profile || Object.keys(state.diary).length;
+    if (cloudEmpty && localHas) uploadAll();
+    else state = s;
+    saveLocal();
+    $("#store").textContent = "已同步到你的帳號（只有你看得到）";
+    render();
+  } catch (e) {
+    $("#store").textContent = "本機儲存（雲端同步無法使用）";
+  }
+}
+
+/* ---------- sleep math ---------- */
+function calc(e) {
+  const b = rel(e.bed), l = rel(e.lights), w = rel(e.wake), o = rel(e.out);
+  const sol = +e.sol || 0, waso = +e.waso || 0;
+  const tib = o - b, tst = Math.max(0, w - l - sol - waso);
+  return { tib, tst, se: tib > 0 ? Math.min(100, tst / tib * 100) : 0, sol, waso };
+}
+function validate(e) {
+  if (!e.date) return "請選擇起床那天的日期。";
+  if (!e.bed || !e.lights || !e.wake || !e.out) return "請填完四個時間。";
+  const b = rel(e.bed), l = rel(e.lights), w = rel(e.wake), o = rel(e.out);
+  if (l < b) return "關燈時間不能早於上床時間。";
+  if (w <= l) return "最後醒來時間要晚於關燈時間。";
+  if (o < w) return "下床時間不能早於最後醒來時間。";
+  if (o - b > 16 * 60) return "在床時間超過 16 小時，請檢查時間（上午/下午）。";
+  if ((+e.sol || 0) + (+e.waso || 0) > w - l) return "入睡時間加夜醒時間，超過了關燈到醒來的總時間。";
+  if (e.date > todayISO()) return "不能記錄未來的日期。";
+  return null;
+}
+function entries() {
+  return Object.keys(state.diary).sort().map(date => ({ date, ...state.diary[date], c: calc(state.diary[date]) }));
+}
+function summarize(list) {
+  if (!list.length) return null;
+  return {
+    n: list.length,
+    se: mean(list.map(e => e.c.se)), tst: mean(list.map(e => e.c.tst)), tib: mean(list.map(e => e.c.tib)),
+    sol: mean(list.map(e => e.c.sol)), waso: mean(list.map(e => e.c.waso)),
+  };
+}
+function last7() { const t = todayISO(); return entries().filter(e => daysBetween(e.date, t) < 7); }
+function seClass(se) { return se >= 85 ? "good" : se >= 75 ? "warn" : "bad"; }
+function seLabel(se) { return se >= 85 ? "良好" : se >= 75 ? "普通" : "偏低"; }
+
+/* ---------- screening ---------- */
+const CONTRA = [
+  ["bipolar", "曾被診斷雙極性疾患（躁鬱症）或有躁期發作"],
+  ["epilepsy", "有癲癇或曾經抽搐發作"],
+  ["parasomnia", "有夢遊、夢中拳打腳踢等異常睡眠行為"],
+  ["falls", "行動不穩、容易跌倒（例如需要拐杖或曾在夜間跌倒）"],
+  ["vigilance", "工作需要高度警覺，例如職業駕駛、操作重機械、輪班醫護"],
+  ["osa", "已確診睡眠呼吸中止，但目前沒有治療"],
+];
+const STOPBANG = [
+  ["s", "打鼾很大聲（隔著門都聽得到）"],
+  ["t", "白天常覺得疲倦、想睡，甚至開車時打瞌睡"],
+  ["o", "有人看到你睡覺時呼吸停止，或你會嗆醒"],
+  ["p", "有高血壓，或正在吃降血壓藥"],
+  ["b", "BMI 超過 35"],
+  ["a", "年齡超過 50 歲"],
+  ["n", "頸圍超過 40 公分"],
+  ["g", "生理男性"],
+];
+function stopBangScore(sc) { return STOPBANG.filter(([k]) => sc.stopbang[k]).length; }
+function restrictionBlockers(sc) {
+  const out = [];
+  if (!sc) return out;
+  if (CONTRA.some(([k]) => k !== "osa" && sc.contra[k]) && !sc.doctorOk) out.push("contra");
+  if ((sc.contra.osa || stopBangScore(sc) >= 3) && !sc.osaCleared) out.push("osa");
+  return out;
+}
+function mode() { return state.profile && restrictionBlockers(state.profile.screening).length === 0 ? "standard" : "gentle"; }
+
+/* ---------- sleep window ---------- */
+function windows() { return (state.profile && state.profile.windows) || []; }
+function curWin() { const w = windows(); return w.length ? w[w.length - 1] : null; }
+function winFor(date) { let r = null; for (const w of windows()) if (w.start < date) r = w; return r; }
+function bedtimeOf(w) { return fromMin(toMin(w.wake) - w.minutes); }
+function baselineProposal() {
+  if (curWin()) return null;
+  const t = todayISO();
+  const recent = entries().filter(e => daysBetween(e.date, t) < 14);
+  if (recent.length < BASELINE_NIGHTS) return { ready: false, n: recent.length };
+  const s = summarize(recent);
+  let m = Math.max(MIN_WINDOW, round15(s.tst));
+  m = Math.min(m, Math.max(MIN_WINDOW, round15(s.tib)), MAX_WINDOW);
+  return { ready: true, ...s, minutes: m };
+}
+function titration() {
+  const w = curWin(); if (!w) return null;
+  const due = addDays(w.start, 7), t = todayISO();
+  if (t < due) return { due: false, daysLeft: daysBetween(t, due) };
+  const recent = entries().filter(e => e.date > w.start).slice(-7);
+  if (recent.length < 5) return { due: true, enough: false, n: recent.length };
+  const se = mean(recent.map(e => e.c.se));
+  const older = !!state.profile.older;
+  const hi = older ? 85 : 90, lo = older ? 80 : 85;
+  let delta = 0;
+  if (se >= hi) delta = 15; else if (se < lo) delta = -15;
+  const minutes = Math.max(MIN_WINDOW, Math.min(MAX_WINDOW, w.minutes + delta));
+  let decision;
+  if (minutes > w.minutes) decision = "延長 15 分鐘";
+  else if (minutes < w.minutes) decision = "縮短 15 分鐘";
+  else if (delta < 0) decision = "已到下限 " + hm(MIN_WINDOW) + "，維持不變";
+  else if (delta > 0) decision = "已到上限，維持不變";
+  else decision = "維持不變";
+  return { due: true, enough: true, n: recent.length, se, hi, lo, minutes, delta: minutes - w.minutes, decision };
+}
+function programAnchor() {
+  const w = windows();
+  if (w.length) return w[0].start;
+  if (mode() === "gentle") {
+    const e = entries(); if (e.length >= BASELINE_NIGHTS) return e[BASELINE_NIGHTS - 1].date;
+  }
+  return null;
+}
+function programWeek() {
+  const a = programAnchor(); if (!a) return 0;
+  return Math.min(6, 1 + Math.floor(daysBetween(a, todayISO()) / 7));
+}
+
+/* ---------- lessons ---------- */
+const LESSONS = [
+  { wk: 0, title: "基線紀錄：先看清楚現在怎麼睡", sum: "連續 7 晚填日記，作息先不要改",
+    body: `<p>每天早上起床後 1 小時內填寫昨晚的日記。數字用估計就好，<b>不要整晚看時鐘</b>，看時鐘本身就會讓人更清醒。</p>
+<p>這一週先照平常的方式睡。目的是算出你的「平均實際睡眠時間」和「睡眠效率」，下週的睡眠時段就是從這兩個數字算出來的。</p>
+<p>睡眠效率 = 實際睡著的時間 ÷ 躺在床上的時間。失眠的人常常在床上躺很久，效率只有 60–75%。</p>`,
+    ev: `睡眠日記是所有 CBT-I 試驗的標準評估工具，本工具的欄位依照 Consensus Sleep Diary（Carney 等，<i>Sleep</i> 2012）設計。` },
+  { wk: 1, title: "睡眠限制與刺激控制", sum: "固定起床時間，只在睡眠時段內躺床",
+    body: `<p><b>睡眠限制：</b>暫時把躺床時間縮短到跟你實際睡著的時間差不多（最少 ${hm(MIN_WINDOW)}）。這會累積「睡意壓力」，讓你更快入睡、半夜比較少醒。每週依照睡眠效率調整一次：</p>
+<ul><li>平均效率 ≥ 90%（65 歲以上 ≥ 85%）：時段延長 15 分鐘</li><li>85–90%（65 歲以上 80–85%）：維持</li><li>&lt; 85%（65 歲以上 &lt; 80%）：縮短 15 分鐘</li></ul>
+<p><b>刺激控制</b>（Bootzin 六條規則）：</p>
+<ol><li>真的想睡才上床，不是「時間到了」就上床。</li><li>床只用來睡覺（和親密行為），不在床上滑手機、看劇、工作。</li><li>躺下約 20 分鐘還睡不著（用感覺估計，不要看時鐘），就起床到別的房間，做點安靜的事，等睏了再回床。</li><li>半夜醒來睡不回去，也照第 3 條做。</li><li>每天同一時間起床，週末也一樣。</li><li>白天不要小睡。</li></ol>
+<div class="callout warn"><p><b>前 1–2 週通常會更睏，這是正常的。</b>白天覺得很睏時不要開車或操作危險機械。如果睏到影響安全，請停止並諮詢醫師。</p></div>`,
+    ev: `AASM 2021 臨床指引（Edinger 等，<i>J Clin Sleep Med</i>）把睡眠限制和刺激控制列為單獨使用也有效的方法。睡眠限制的原始研究是 Spielman 等（<i>Sleep</i> 1987）。Kyle 等（<i>Sleep</i> 2014）證實初期會增加白天嗜睡，所以要注意安全。` },
+  { wk: 2, title: "放鬆訓練：把身體的油門放開", sum: "睡前一小時進行，每天練習",
+    body: `<p>失眠的人常常處在「過度激發」狀態：心跳快、肌肉緊、腦袋停不下來。放鬆訓練要每天練習才會有效，不是睡不著時才拿來用。</p>
+<p><b>慢呼吸：</b>吸氣 4 秒、吐氣 6 秒，大約每分鐘 6 次，練 5 分鐘。下面的節拍器可以帶你做。</p>
+<p><b>漸進式肌肉放鬆：</b>從腳開始，每個部位用力繃緊 5 秒、放鬆 15 秒，感受兩者的差別。順序：腳掌 → 小腿 → 大腿 → 臀部 → 腹部 → 手 → 手臂 → 肩膀 → 臉。</p>`,
+    ev: `AASM 2021 指引對放鬆療法給予「有條件建議」，屬於可以單獨使用的方法。`, tool: "pacer" },
+  { wk: 3, title: "想法調整：對睡眠的擔心會讓人更睡不著", sum: "找出讓你焦慮的睡眠想法，換一個更貼近事實的說法",
+    body: `<p>失眠時常出現一些想法，這些想法會讓身體更緊張、更難入睡。常見的例子：</p>
+<ul>
+<li>「一定要睡滿 8 小時，不然明天就完蛋。」→ 每個人需要的睡眠不同。少睡一晚，隔天通常還是撐得過去，表現下降比你預期的少。</li>
+<li>「躺久一點，總能多睡一點。」→ 躺床越久，睡眠越破碎，床也會跟「清醒」連結在一起。</li>
+<li>「我失眠一定會傷身體、會生病。」→ 長期失眠值得處理，但一兩晚沒睡好不會造成傷害。過度擔心反而會造成更多失眠。</li>
+<li>「我已經完全失去控制睡眠的能力。」→ 睡眠是自動發生的，你要做的是移開阻礙（躺太久、太緊張），不是「用力睡」。</li>
+</ul>
+<p><b>擔憂時間：</b>傍晚找 15 分鐘，把擔心的事寫下來，寫出下一步可以做的事。到了床上再冒出來，就告訴自己「這件事已經處理過了，明天再說」。</p>`,
+    ev: `認知重建是 CBT-I 的核心成分（Harvey，<i>Behav Res Ther</i> 2002 的失眠認知模型）。Carney 與 Waters（<i>Behav Sleep Med</i> 2006）發現「建設性擔憂」可以減少睡前的反覆思考。`, tool: "thoughts" },
+  { wk: 4, title: "生理時鐘與睡眠衛生", sum: "光線、咖啡因、酒精、溫度",
+    body: `<ul>
+<li><b>早上照光：</b>起床後 1 小時內到戶外或窗邊 15–30 分鐘，可以穩定生理時鐘。</li>
+<li><b>咖啡因：</b>中午以後不喝咖啡、茶、能量飲料。</li>
+<li><b>酒精：</b>會讓人比較快睡著，但下半夜容易醒，睡眠變淺。</li>
+<li><b>洗熱水澡：</b>睡前 1–2 小時洗 40–42°C 的熱水澡，平均能讓入睡快約 10 分鐘。</li>
+<li><b>臥室：</b>涼爽、黑暗、安靜。時鐘轉過去，不要看時間。</li>
+<li><b>睡前一小時：</b>螢幕調暗，做放鬆、不刺激的事。</li>
+</ul>`,
+    ev: `AASM 2021 指引指出，單靠睡眠衛生<b>不足以</b>治療失眠，要搭配前面的行為方法。熱水澡的數據來自 Haghayegh 等的統合分析（<i>Sleep Med Rev</i> 2019）。`, tool: "hygiene" },
+  { wk: 5, title: "穩定與微調", sum: "繼續每週調整，直到時段穩定",
+    body: `<p>到了這一週，大多數人的睡眠時段已經延長了一些，入睡和夜醒也改善了。繼續做三件事：</p>
+<ul><li>每週依照效率調整，直到你白天精神足夠，或延長後效率開始下降，那就是你目前需要的睡眠量。</li>
+<li>週末也固定起床時間。補眠會讓週日晚上又睡不著。</li>
+<li>非小睡不可時，下午 3 點前睡、不超過 20 分鐘。</li></ul>`,
+    ev: `Trauer 等的統合分析（<i>Ann Intern Med</i> 2015，20 篇 RCT）發現 CBT-I 平均讓入睡時間縮短約 19 分鐘、夜醒時間減少約 26 分鐘、睡眠效率提高約 10 個百分點，效果在治療結束後仍然維持。` },
+  { wk: 6, title: "預防復發", sum: "偶爾睡不好很正常，重點是不要回到舊習慣",
+    body: `<p>壓力大、生病、旅行時，失眠可能會回來。這時候不要提早上床、不要賴床補眠，這些做法會讓短期失眠變成長期失眠。</p>
+<p><b>你的應變計畫：</b></p>
+<ol><li>維持固定起床時間。</li><li>回到刺激控制：睡不著就起床。</li><li>如果連續 1–2 週變差，就重新填日記，用最近一週的實際睡眠重新設定時段。</li><li>持續 3 個月以上，或白天功能明顯受影響，請找睡眠專科醫師。</li></ol>`,
+    ev: `數位 CBT-I 的大型試驗（Ritterband 等，<i>JAMA Psychiatry</i> 2017，n=303；Espie 等，<i>JAMA Psychiatry</i> 2019，n=1,711）顯示，效果在一年追蹤時大多仍然存在。` },
+];
+
+/* ---------- render ---------- */
+function render() {
+  const main = $("#main");
+  const needsOnboard = !state.profile;
+  $("#tabs").hidden = needsOnboard || view === "screen";
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === view ? "page" : "false"));
+  stopPacer();
+  if (needsOnboard || view === "screen") main.innerHTML = renderScreen(needsOnboard);
+  else if (view === "diary") main.innerHTML = renderDiary();
+  else if (view === "trends") main.innerHTML = renderTrends();
+  else if (view === "learn") main.innerHTML = renderLearn();
+  else if (view === "settings") main.innerHTML = renderSettings();
+  else main.innerHTML = renderToday();
+}
+
+function crisisBox() {
+  return `<div class="callout bad"><p><b>如果你最近有傷害自己或不想活的念頭，請現在就找人談談。</b></p>
+<p>安心專線 <span class="num">1925</span>（24 小時）・生命線 <span class="num">1995</span>・張老師 <span class="num">1980</span>。有立即危險請撥 <span class="num">119</span>。</p></div>`;
+}
+
+function renderScreen(first) {
+  const sc = screenDraft || (state.profile ? clone(state.profile.screening) : { contra: {}, stopbang: {}, doctorOk: false, osaCleared: false, crisis: false });
+  screenDraft = sc;
+  const wake = state.profile ? state.profile.wakeTime : "07:00";
+  const older = state.profile ? state.profile.older : false;
+  const score = stopBangScore(sc);
+  const blockers = restrictionBlockers(sc);
+  const intro = first ? `<section class="panel hero">
+    <span class="eyebrow">失眠認知行為治療（CBT-I）自助工具</span>
+    <h2>用六週，把睡眠找回來</h2>
+    <p class="muted">CBT-I 是失眠的第一線治療，效果有大量隨機對照試驗支持，而且停止後效果能維持。這個工具照標準流程帶你做：</p>
+    <ol class="small" style="margin:0;padding-left:1.3em;display:grid;gap:4px">
+      <li>安全篩檢：確認你適不適合做睡眠限制</li>
+      <li>第 0 週：填 7 晚睡眠日記，作為基線</li>
+      <li>第 1–6 週：依你的睡眠效率，每週調整睡眠時段，搭配刺激控制、放鬆、想法調整</li>
+    </ol>
+    <p class="small muted">這不是醫療診斷。慢性失眠（每週 3 晚以上、持續 3 個月以上）建議同時就醫。</p>
+  </section>` : "";
+  return `${intro}
+  <form id="screen-form" class="stack">
+    <section class="panel">
+      <h2>1. 安全檢查</h2>
+      <p class="muted small">以下任何一項符合，睡眠限制可能會讓情況變糟（例如誘發躁期、癲癇或跌倒），需要醫師陪同進行。</p>
+      <div class="checks">${CONTRA.map(([k, t]) => `<label class="check"><input type="checkbox" id="c-${k}" data-g="contra" data-k="${k}" ${sc.contra[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}</div>
+      <label class="check"><input type="checkbox" id="c-crisis" data-g="crisis" ${sc.crisis ? "checked" : ""}><span>最近兩週曾有傷害自己或不想活的念頭</span></label>
+      ${sc.crisis ? crisisBox() : ""}
+    </section>
+    <section class="panel">
+      <h2>2. 睡眠呼吸中止風險（STOP-Bang）</h2>
+      <p class="muted small">8 題，每題 1 分。3 分以上屬於中高風險，建議先做睡眠檢查。</p>
+      <div class="checks">${STOPBANG.map(([k, t]) => `<label class="check"><input type="checkbox" id="sb-${k}" data-g="stopbang" data-k="${k}" ${sc.stopbang[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}</div>
+      <p>目前分數：<span class="score">${score}</span> / 8　<span class="chip ${score >= 5 ? "bad" : score >= 3 ? "warn" : "good"}">${score >= 5 ? "高風險" : score >= 3 ? "中度風險" : "低風險"}</span></p>
+    </section>
+    <section class="panel">
+      <h2>3. 你的作息</h2>
+      <div class="grid2">
+        <label for="s-wake">每天固定起床時間（週末也一樣）<input type="time" id="s-wake" value="${esc(wake)}" required></label>
+        <label class="check" style="align-self:end"><input type="checkbox" id="s-older" ${older ? "checked" : ""}><span>我 65 歲以上（調整門檻會放寬）</span></label>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>結果</h2>
+      ${blockers.length === 0
+        ? `<div class="callout good"><p><b>可以使用完整版</b>（睡眠限制 + 刺激控制 + 其他方法）。</p></div>`
+        : `<div class="callout warn"><p><b>先使用溫和版：</b>固定起床時間、刺激控制、放鬆與想法調整，但<b>不縮短</b>你的躺床時間。</p>
+          ${blockers.includes("osa") ? `<p>你的呼吸中止風險偏高。如果真的有呼吸中止，睡眠限制會讓白天嗜睡更嚴重。建議先到睡眠中心或胸腔科、耳鼻喉科做睡眠檢查。</p>` : ""}
+          ${blockers.includes("contra") ? `<p>你勾選的狀況需要醫師評估後，才適合做睡眠限制。</p>` : ""}</div>`}
+      ${(sc.contra.osa || score >= 3) ? `<label class="check"><input type="checkbox" id="c-osaCleared" data-g="flag" data-k="osaCleared" ${sc.osaCleared ? "checked" : ""}><span>我已做過睡眠檢查，排除了呼吸中止，或呼吸中止已經在治療</span></label>` : ""}
+      ${CONTRA.some(([k]) => k !== "osa" && sc.contra[k]) ? `<label class="check"><input type="checkbox" id="c-doctorOk" data-g="flag" data-k="doctorOk" ${sc.doctorOk ? "checked" : ""}><span>我的醫師同意我在追蹤下進行睡眠限制</span></label>` : ""}
+      <div class="btns"><button type="submit" class="primary">${first ? "開始第 0 週" : "儲存"}</button>${first ? "" : `<button type="button" data-act="cancel-screen">取消</button>`}</div>
+    </section>
+  </form>`;
+}
+
+function renderToday() {
+  const t = todayISO();
+  const m = mode();
+  const w = curWin();
+  const s7 = summarize(last7());
+  const wk = programWeek();
+  const lesson = LESSONS[wk];
+  const hasToday = !!state.diary[t];
+  const sc = state.profile.screening;
+  let hero;
+  if (m === "standard" && w) {
+    hero = `<section class="panel hero">
+      <span class="eyebrow">今晚的睡眠時段・第 ${wk} 週</span>
+      <div class="window"><span class="t">${bedtimeOf(w)}</span><span class="arrow">→</span><span class="t">${esc(w.wake)}</span></div>
+      <p class="muted">共 ${dur(w.minutes)}。${bedtimeOf(w)} 之前就算想睡也先撐著；過了時間不睏，就等睏了再上床。${esc(w.wake)} 一定起床。</p>
+    </section>`;
+  } else if (m === "standard") {
+    const bp = baselineProposal();
+    hero = `<section class="panel hero">
+      <span class="eyebrow">第 0 週・基線紀錄</span>
+      <div class="window"><span class="t">${bp.ready ? BASELINE_NIGHTS : bp.n}</span><span class="arrow">/ ${BASELINE_NIGHTS} 晚</span></div>
+      <p class="muted">照平常的方式睡，每天早上記錄昨晚。滿 ${BASELINE_NIGHTS} 晚後，這裡會算出你的第一個睡眠時段。</p>
+    </section>`;
+  } else {
+    const n = entries().length;
+    hero = `<section class="panel hero">
+      <span class="eyebrow">溫和版・${n < BASELINE_NIGHTS ? "第 0 週" : "第 " + wk + " 週"}</span>
+      <div class="window"><span class="arrow">起床</span><span class="t">${esc(state.profile.wakeTime)}</span></div>
+      <p class="muted">每天同一時間起床。晚上真的睏了才上床；躺 20 分鐘睡不著就起床，等睏了再回來。</p>
+    </section>`;
+  }
+
+  const actions = [];
+  if (!hasToday) actions.push(`<div class="callout"><p><b>還沒記錄昨晚的睡眠。</b>趁記憶清楚的時候填，大約 1 分鐘。</p><div class="btns"><button class="primary" data-act="go" data-v="diary">記錄昨晚</button></div></div>`);
+  if (m === "standard" && !w) {
+    const bp = baselineProposal();
+    if (bp.ready) {
+      actions.push(`<div class="callout good">
+        <p><b>基線完成，可以開始睡眠限制了。</b></p>
+        <p class="small">過去 ${bp.n} 晚：平均在床 ${dur(bp.tib)}，實際睡著 ${dur(bp.tst)}，睡眠效率 ${pct(bp.se)}。</p>
+        ${bp.se >= 85 ? `<p class="small">你的效率已經不錯，時段不會縮短太多，重點放在固定起床和刺激控制。</p>` : ""}
+        <p>建議時段：<b class="num">${fromMin(toMin(state.profile.wakeTime) - bp.minutes)} → ${esc(state.profile.wakeTime)}</b>（${dur(bp.minutes)}）</p>
+        <div class="btns"><button class="primary" data-act="start-window">從今晚開始</button></div></div>`);
+    }
+  }
+  if (m === "standard" && w) {
+    const tt = titration();
+    if (tt && tt.due && tt.enough) {
+      actions.push(`<div class="callout ${tt.delta > 0 ? "good" : tt.delta < 0 ? "warn" : ""}">
+        <p><b>本週調整：${tt.decision}</b></p>
+        <p class="small">最近 ${tt.n} 晚平均睡眠效率 ${pct(tt.se)}（延長門檻 ${tt.hi}%，縮短門檻 ${tt.lo}%）。</p>
+        <p>新時段：<b class="num">${fromMin(toMin(w.wake) - tt.minutes)} → ${esc(w.wake)}</b>（${dur(tt.minutes)}）</p>
+        <div class="btns"><button class="primary" data-act="apply-titration">套用新時段</button></div></div>`);
+    } else if (tt && tt.due) {
+      actions.push(`<div class="callout"><p>本週該調整時段了，但只記錄了 ${tt.n} 晚。至少 5 晚才能準確計算，請繼續記錄。</p></div>`);
+    } else if (tt) {
+      actions.push(`<p class="small muted">再 ${tt.daysLeft} 天會依照這週的睡眠效率調整時段。</p>`);
+    }
+  }
+  if (sc.crisis) actions.push(crisisBox());
+
+  const stats = s7 ? `<section class="panel">
+      <div class="window" style="justify-content:space-between"><h3>最近 7 晚</h3><span class="small muted">${s7.n} 晚有記錄</span></div>
+      <div class="stats">
+        <div class="stat"><span class="v">${pct(s7.se)}</span><span class="k">睡眠效率 <span class="chip ${seClass(s7.se)}">${seLabel(s7.se)}</span></span></div>
+        <div class="stat"><span class="v">${hm(s7.tst)}</span><span class="k">實際睡眠（時:分）</span></div>
+        <div class="stat"><span class="v">${Math.round(s7.sol)}</span><span class="k">入睡花費（分）</span></div>
+        <div class="stat"><span class="v">${Math.round(s7.waso)}</span><span class="k">夜醒合計（分）</span></div>
+      </div></section>` : "";
+
+  return `${hero}${actions.join("")}${stats}
+  <section class="panel">
+    <span class="eyebrow">本週課程・第 ${lesson.wk} 週</span>
+    <h3>${lesson.title}</h3>
+    <p class="muted">${lesson.sum}</p>
+    <div class="btns"><button data-act="go" data-v="learn">閱讀</button></div>
+  </section>`;
+}
+
+function diaryDefaults() {
+  const t = todayISO();
+  if (editing && state.diary[editing]) return { date: editing, ...state.diary[editing] };
+  const w = curWin();
+  const prev = entries().slice(-1)[0];
+  const bed = w ? bedtimeOf(w) : prev ? prev.bed : "23:00";
+  const wake = w ? w.wake : state.profile.wakeTime;
+  return { date: state.diary[t] ? "" : t, bed, lights: bed, sol: "", wakes: "", waso: "", wake, out: wake, quality: "3", nap: "0", caffeine: false, alcohol: false, meds: false, notes: "" };
+}
+
+function renderDiary() {
+  const d = diaryDefaults();
+  const list = entries().slice().reverse();
+  return `<form id="diary-form" class="panel" novalidate>
+    <div class="window" style="justify-content:space-between"><h2>${editing ? "修改 " + md(editing) + " 的紀錄" : "記錄昨晚"}</h2>${editing ? `<button type="button" data-act="cancel-edit">取消修改</button>` : ""}</div>
+    <label for="f-date">起床那天的日期<input type="date" id="f-date" value="${esc(d.date)}" max="${todayISO()}" ${editing ? "readonly" : ""} required></label>
+    <div class="grid2">
+      <label for="f-bed">幾點上床<input type="time" id="f-bed" value="${esc(d.bed)}" required></label>
+      <label for="f-lights">幾點關燈、準備睡<input type="time" id="f-lights" value="${esc(d.lights)}" required></label>
+    </div>
+    <div class="grid3">
+      <label for="f-sol">大約多久睡著（分）<input type="number" id="f-sol" inputmode="numeric" min="0" max="600" value="${esc(d.sol)}" placeholder="30"></label>
+      <label for="f-wakes">半夜醒幾次<input type="number" id="f-wakes" inputmode="numeric" min="0" max="30" value="${esc(d.wakes)}" placeholder="2"></label>
+      <label for="f-waso">醒著共幾分鐘<input type="number" id="f-waso" inputmode="numeric" min="0" max="600" value="${esc(d.waso)}" placeholder="20"></label>
+    </div>
+    <div class="grid2">
+      <label for="f-wake">最後一次醒來<input type="time" id="f-wake" value="${esc(d.wake)}" required></label>
+      <label for="f-out">幾點下床<input type="time" id="f-out" value="${esc(d.out)}" required></label>
+    </div>
+    <div class="grid2">
+      <label for="f-quality">睡眠品質<select id="f-quality">${["很差", "差", "普通", "好", "很好"].map((t, i) => `<option value="${i + 1}" ${String(d.quality) === String(i + 1) ? "selected" : ""}>${i + 1}・${t}</option>`).join("")}</select></label>
+      <label for="f-nap">昨天白天小睡（分）<input type="number" id="f-nap" inputmode="numeric" min="0" max="600" value="${esc(d.nap)}"></label>
+    </div>
+    <div class="checks">
+      <label class="check"><input type="checkbox" id="f-caffeine" ${d.caffeine ? "checked" : ""}><span>中午後喝了含咖啡因飲料</span></label>
+      <label class="check"><input type="checkbox" id="f-alcohol" ${d.alcohol ? "checked" : ""}><span>睡前喝酒</span></label>
+      <label class="check"><input type="checkbox" id="f-meds" ${d.meds ? "checked" : ""}><span>使用助眠藥物</span></label>
+    </div>
+    <label for="f-notes">備註<textarea id="f-notes" maxlength="500" placeholder="例如：工作壓力、身體不舒服">${esc(d.notes)}</textarea></label>
+    <p class="err" id="f-err" hidden></p>
+    <div class="btns"><button type="submit" class="primary">儲存</button></div>
+    <p class="small muted">用估計的就好。睡覺時不要看時鐘。</p>
+  </form>
+  <section class="panel">
+    <h2>過去的紀錄</h2>
+    ${list.length ? `<div class="list">${list.map(e => `<div class="row">
+      <span class="d">${md(e.date)} 週${wd(e.date)}</span>
+      <span class="small">${esc(e.bed)}–${esc(e.out)}・睡 ${hm(e.c.tst)}・入睡 ${e.c.sol} 分 <span class="chip ${seClass(e.c.se)}">效率 ${pct(e.c.se)}</span></span>
+      <span class="btns">${pendingDelete === e.date
+        ? `<button class="danger" data-act="del-confirm" data-d="${e.date}">確定刪除</button><button data-act="del-cancel">保留</button>`
+        : `<button data-act="edit" data-d="${e.date}">修改</button><button data-act="del" data-d="${e.date}" aria-label="刪除 ${md(e.date)}">刪除</button>`}</span>
+    </div>`).join("")}</div>` : `<p class="muted">還沒有紀錄。填好上面的表單，第一筆就會出現在這裡。</p>`}
+  </section>`;
+}
+
+function chartWidth() { const m = $("#main"); return Math.max(300, Math.min(640, (m ? m.clientWidth : 640) - 34)); }
+function seChart(list) {
+  const W = chartWidth(), H = 230, L = 40, R = 16, T = 14, B = 30;
+  const older = state.profile.older;
+  const hi = older ? 85 : 90, lo = older ? 80 : 85;
+  const minSE = Math.min(50, Math.floor(Math.min(...list.map(e => e.c.se)) / 10) * 10);
+  const y = v => T + (100 - v) / (100 - minSE) * (H - T - B);
+  const d0 = list[0].date, span = Math.max(1, daysBetween(d0, list[list.length - 1].date));
+  const x = d => L + daysBetween(d0, d) / span * (W - L - R);
+  const ticks = [];
+  for (let v = minSE; v <= 100; v += 10) ticks.push(v);
+  const pts = list.map(e => `${x(e.date).toFixed(1)},${y(e.c.se).toFixed(1)}`).join(" ");
+  const xl = [list[0], list[Math.floor((list.length - 1) / 2)], list[list.length - 1]].filter((e, i, a) => a.indexOf(e) === i);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="每晚睡眠效率折線圖">
+    ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("")}
+    <rect x="${L}" y="${y(100)}" width="${W - L - R}" height="${y(hi) - y(100)}" fill="var(--good-bg)"/>
+    <line x1="${L}" x2="${W - R}" y1="${y(hi)}" y2="${y(hi)}" stroke="var(--good)" stroke-dasharray="4 4" stroke-width="1"/>
+    <line x1="${L}" x2="${W - R}" y1="${y(lo)}" y2="${y(lo)}" stroke="var(--warn)" stroke-dasharray="4 4" stroke-width="1"/>
+    <text x="${W - R}" y="${y(hi) - 4}" text-anchor="end">延長 ${hi}%</text>
+    <text x="${W - R}" y="${y(lo) + 13}" text-anchor="end">縮短 ${lo}%</text>
+    <polyline points="${pts}" fill="none" stroke="var(--sleep)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${list.map(e => `<circle cx="${x(e.date)}" cy="${y(e.c.se)}" r="4" fill="var(--sleep)" stroke="var(--surface)" stroke-width="2"/><circle class="hit" cx="${x(e.date)}" cy="${y(e.c.se)}" r="14" fill="transparent" data-tip="${md(e.date)} 週${wd(e.date)}｜效率 ${pct(e.c.se)}｜睡 ${hm(e.c.tst)}｜在床 ${hm(e.c.tib)}"/>`).join("")}
+    ${xl.map(e => `<text x="${x(e.date)}" y="${H - 8}" text-anchor="${e === list[0] && list.length > 1 ? "start" : e === list[list.length - 1] && list.length > 1 ? "end" : "middle"}">${md(e.date)}</text>`).join("")}
+  </svg>`;
+}
+
+function sleepLog(list) {
+  const W = chartWidth(), L = 78, R = 10, rowH = 24, T = 22;
+  const H = T + list.length * rowH + 6;
+  const a0 = 360, a1 = 1440;  // 18:00 → 12:00 next day, in minutes since noon
+  const x = r => L + (Math.max(a0, Math.min(a1, r)) - a0) / (a1 - a0) * (W - L - R);
+  const hours = [18, 21, 0, 3, 6, 9, 12];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="睡眠日誌圖：每晚在床與睡著的時段">
+    ${hours.map(h => { const r = rel(pad(h) + ":00") || (h === 12 ? 1440 : 0); return `<line x1="${x(r)}" x2="${x(r)}" y1="${T - 4}" y2="${H - 4}" stroke="var(--line)" stroke-width="1"/><text x="${x(r)}" y="${T - 8}" text-anchor="middle">${pad(h)}</text>`; }).join("")}
+    ${list.map((e, i) => {
+      const y0 = T + i * rowH + 4, h = rowH - 8;
+      const win = winFor(e.date);
+      const winRect = win ? `<rect x="${x(rel(bedtimeOf(win)))}" y="${y0 - 2}" width="${Math.max(0, x(rel(win.wake)) - x(rel(bedtimeOf(win))))}" height="${h + 4}" fill="none" stroke="var(--accent)" stroke-dasharray="3 3" stroke-width="1.5" rx="3"/>` : "";
+      const sStart = rel(e.lights) + e.c.sol, sEnd = rel(e.wake);
+      return `<text x="4" y="${y0 + h - 3}">${md(e.date)} ${wd(e.date)}</text>
+        <rect x="${x(rel(e.bed))}" y="${y0}" width="${Math.max(0, x(rel(e.out)) - x(rel(e.bed)))}" height="${h}" rx="3" fill="var(--bed)"/>
+        ${sEnd > sStart ? `<rect x="${x(sStart)}" y="${y0 + 3}" width="${Math.max(0, x(sEnd) - x(sStart))}" height="${h - 6}" rx="2" fill="var(--sleep)"/>` : ""}
+        ${winRect}
+        <rect class="hit" x="${L}" y="${y0 - 2}" width="${W - L - R}" height="${h + 4}" fill="transparent" data-tip="${md(e.date)}｜上床 ${esc(e.bed)}・關燈 ${esc(e.lights)}・入睡 ${e.c.sol} 分・夜醒 ${e.c.waso} 分・醒來 ${esc(e.wake)}・下床 ${esc(e.out)}"/>`;
+    }).join("")}
+  </svg>`;
+}
+
+function weeklyTable() {
+  const all = entries(); if (!all.length) return "";
+  const anchor = programAnchor();
+  const base = anchor ? addDays(anchor, -7) : all[0].date;
+  const groups = {};
+  all.forEach(e => { const k = Math.floor(daysBetween(base, e.date) / 7); (groups[k] = groups[k] || []).push(e); });
+  const keys = Object.keys(groups).map(Number).sort((a, b) => a - b);
+  return `<div class="tablewrap"><table>
+    <thead><tr><th>週次</th><th>晚數</th><th>效率</th><th>睡眠</th><th>在床</th><th>入睡(分)</th><th>夜醒(分)</th></tr></thead>
+    <tbody>${keys.map(k => { const s = summarize(groups[k]); return `<tr><td>${k < 0 ? "之前" : "第 " + k + " 週"}</td><td>${s.n}</td><td>${pct(s.se)}</td><td>${hm(s.tst)}</td><td>${hm(s.tib)}</td><td>${Math.round(s.sol)}</td><td>${Math.round(s.waso)}</td></tr>`; }).join("")}</tbody>
+  </table></div>`;
+}
+
+function renderTrends() {
+  const all = entries();
+  if (all.length < 2) return `<section class="panel"><h2>趨勢</h2><p class="muted">記錄滿 2 晚後，這裡會顯示每晚的睡眠效率、睡眠日誌圖和每週摘要。</p><div class="btns"><button class="primary" data-act="go" data-v="diary">去記錄</button></div></section>`;
+  const recent = all.slice(-28), log = all.slice(-14);
+  const hist = windows();
+  return `<section class="panel">
+    <h2>每晚睡眠效率</h2>
+    <p class="small muted">最近 ${recent.length} 晚。效率 = 實際睡眠 ÷ 在床時間。點圓點可以看詳細數字。</p>
+    ${seChart(recent)}
+  </section>
+  <section class="panel">
+    <h2>睡眠日誌圖</h2>
+    <div class="legend"><span><i style="background:var(--bed)"></i>在床</span><span><i style="background:var(--sleep)"></i>睡著（估計，不含夜醒位置）</span><span><i style="border:1.5px dashed var(--accent)"></i>處方時段</span></div>
+    <div class="tablewrap">${sleepLog(log)}</div>
+  </section>
+  <section class="panel">
+    <h2>每週摘要</h2>
+    ${weeklyTable()}
+  </section>
+  ${hist.length ? `<section class="panel"><h2>時段調整紀錄</h2><div class="tablewrap"><table><thead><tr><th>開始日</th><th>時段</th><th>長度</th><th>依據</th></tr></thead><tbody>
+    ${hist.slice().reverse().map(w => `<tr><td>${md(w.start)}</td><td class="num">${bedtimeOf(w)}–${esc(w.wake)}</td><td>${hm(w.minutes)}</td><td>${esc(w.reason)}</td></tr>`).join("")}
+  </tbody></table></div></section>` : ""}`;
+}
+
+function renderTool(tool) {
+  if (tool === "pacer") return `<div class="panel pacer" style="background:var(--surface-2)">
+    <div class="orb" id="orb"></div><p class="cue" id="cue" aria-live="polite">準備好就按開始</p>
+    <p class="small muted num" id="pacer-left">5:00</p>
+    <div class="btns"><button class="primary" data-act="pacer">開始 5 分鐘</button></div></div>`;
+  if (tool === "thoughts") {
+    const th = state.profile.thoughts || [];
+    return `<form id="thought-form" class="panel" style="background:var(--surface-2)">
+      <h3>想法紀錄</h3>
+      <label for="t-sit">什麼情況？<input id="t-sit" maxlength="200" placeholder="凌晨 3 點醒來"></label>
+      <label for="t-auto">腦中冒出的想法<textarea id="t-auto" maxlength="400" placeholder="明天的簡報一定會搞砸"></textarea></label>
+      <label for="t-alt">換一個更貼近事實的想法<textarea id="t-alt" maxlength="400" placeholder="以前睡不好也報告過，只是比較累，不會搞砸"></textarea></label>
+      <div class="btns"><button type="submit" class="primary">儲存</button></div>
+    </form>
+    ${th.length ? `<div class="list">${th.slice().reverse().map(x => `<div class="row" style="grid-template-columns:auto minmax(0,1fr)"><span class="d">${md(x.date)}</span><span class="small"><b>${esc(x.sit)}</b><br>「${esc(x.auto)}」<br>→ ${esc(x.alt)}</span></div>`).join("")}</div>` : ""}`;
+  }
+  if (tool === "hygiene") {
+    const items = [["light", "起床後 1 小時內照光 15 分鐘"], ["caffeine", "中午以後不喝含咖啡因飲料"], ["alcohol", "睡前 3 小時不喝酒"], ["bath", "睡前 1–2 小時洗熱水澡"], ["clock", "把時鐘轉過去，晚上不看時間"], ["screen", "睡前 1 小時把螢幕調暗、放下工作"], ["exercise", "白天規律運動，睡前 2 小時避免激烈運動"]];
+    const ck = state.profile.checklist || {};
+    return `<div class="panel" style="background:var(--surface-2)"><h3>我做到的</h3><div class="checks">${items.map(([k, t]) => `<label class="check"><input type="checkbox" id="h-${k}" data-hyg="${k}" ${ck[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}</div></div>`;
+  }
+  return "";
+}
+
+function renderLearn() {
+  const wk = programWeek();
+  return `<section class="panel"><h2>六週課程</h2><p class="muted small">你目前在第 ${wk} 週。每週讀一個單元，之前的單元隨時可以回來看。${mode() === "gentle" ? "溫和版不做睡眠限制，第 1 週只需要練習刺激控制。" : ""}</p></section>
+  ${LESSONS.map(l => `<details class="lesson" ${l.wk === wk ? "open" : ""}>
+    <summary><span class="wk">第 ${l.wk} 週</span><span><h3>${l.title}</h3><span class="small muted">${l.sum}</span></span>${l.wk < wk ? `<span class="chip good">已過</span>` : l.wk === wk ? `<span class="chip warn">本週</span>` : `<span></span>`}</summary>
+    <div class="body">${l.body}${l.tool ? renderTool(l.tool) : ""}<p class="evidence">研究依據：${l.ev}</p></div>
+  </details>`).join("")}`;
+}
+
+function renderSettings() {
+  const p = state.profile;
+  const sc = p.screening;
+  const blockers = restrictionBlockers(sc);
+  return `<section class="panel">
+    <h2>我的設定</h2>
+    <p>目前模式：<span class="chip ${mode() === "standard" ? "good" : "warn"}">${mode() === "standard" ? "完整版（含睡眠限制）" : "溫和版"}</span>　STOP-Bang <span class="num">${stopBangScore(sc)}</span>/8</p>
+    ${blockers.length ? `<p class="small muted">做完睡眠檢查或取得醫師同意後，可以重新檢查來切換成完整版。</p>` : ""}
+    <form id="settings-form" class="grid2">
+      <label for="st-wake">固定起床時間<input type="time" id="st-wake" value="${esc(p.wakeTime)}" required></label>
+      <label class="check" style="align-self:end"><input type="checkbox" id="st-older" ${p.older ? "checked" : ""}><span>65 歲以上</span></label>
+      <div class="btns"><button type="submit" class="primary">儲存</button><button type="button" data-act="rescreen">重新做安全檢查</button></div>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>資料</h2>
+    <p class="small muted">${cloud ? "紀錄存在你的 Claude 帳號裡，只有你自己看得到，換裝置登入也能看到。" : "紀錄只存在這台裝置的瀏覽器裡。清除瀏覽器資料會讓紀錄消失，請定期匯出備份。"}</p>
+    <div class="btns">
+      <button data-act="export-csv">匯出 CSV（給醫師看）</button>
+      <button data-act="export-json">匯出備份（JSON）</button>
+      <label class="btn" for="import-file" style="display:inline-block;color:var(--ink);font-size:14px">匯入備份<input type="file" id="import-file" accept=".json,application/json" hidden></label>
+    </div>
+    <div class="btns">${pendingReset
+      ? `<button class="danger" data-act="reset-confirm">確定刪除全部紀錄</button><button data-act="reset-cancel">取消</button>`
+      : `<button class="danger" data-act="reset">刪除全部紀錄</button>`}</div>
+  </section>
+  <section class="panel">
+    <h2>研究依據</h2>
+    <ul class="sources" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
+      <li>Edinger JD 等（2021）。Behavioral and psychological treatments for chronic insomnia disorder in adults: an AASM clinical practice guideline. <i>J Clin Sleep Med</i>, 17(2).</li>
+      <li>Trauer JM 等（2015）。Cognitive behavioral therapy for chronic insomnia: a systematic review and meta-analysis. <i>Ann Intern Med</i>, 163(3).</li>
+      <li>Spielman AJ, Saskin P, Thorpy MJ（1987）。Treatment of chronic insomnia by restriction of time in bed. <i>Sleep</i>, 10(1).</li>
+      <li>Kyle SD 等（2014）。Sleep restriction therapy for insomnia is associated with reduced objective total sleep time, increased daytime somnolence, and objectively impaired vigilance. <i>Sleep</i>, 37(2).</li>
+      <li>Ritterband LM 等（2017）。Effect of a web-based CBT-I intervention with 1-year follow-up. <i>JAMA Psychiatry</i>, 74(1).</li>
+      <li>Espie CA 等（2019）。Effect of digital CBT for insomnia on health, psychological well-being, and sleep-related quality of life. <i>JAMA Psychiatry</i>, 76(1).</li>
+      <li>Carney CE 等（2012）。The Consensus Sleep Diary. <i>Sleep</i>, 35(2).</li>
+      <li>Chung F 等（2008）。STOP questionnaire. <i>Anesthesiology</i>, 108(5).</li>
+      <li>Haghayegh S 等（2019）。Before-bedtime passive body heating by warm shower or bath to improve sleep. <i>Sleep Med Rev</i>, 46.</li>
+    </ul>
+    <p class="small muted">這個工具依照公開的 CBT-I 標準流程製作，本身沒有經過臨床試驗驗證，不能取代醫師的診斷與治療。</p>
+  </section>`;
+}
+
+/* ---------- breathing pacer ---------- */
+let pacerTimer = null, pacerEnd = 0, pacerPhase = "out", pacerPhaseEnd = 0;
+function stopPacer() { if (pacerTimer) { clearInterval(pacerTimer); pacerTimer = null; } }
+function startPacer() {
+  stopPacer();
+  pacerEnd = Date.now() + 5 * 60 * 1000; pacerPhase = "out"; pacerPhaseEnd = 0;
+  const tick = () => {
+    const now = Date.now(), orb = $("#orb"), cue = $("#cue"), left = $("#pacer-left");
+    if (!orb) { stopPacer(); return; }
+    if (now >= pacerEnd) { stopPacer(); orb.className = "orb"; cue.textContent = "完成。注意身體現在的感覺。"; left.textContent = "0:00"; return; }
+    if (now >= pacerPhaseEnd) {
+      pacerPhase = pacerPhase === "in" ? "out" : "in";
+      pacerPhaseEnd = now + (pacerPhase === "in" ? 4000 : 6000);
+      orb.className = "orb " + pacerPhase;
+      cue.textContent = pacerPhase === "in" ? "用鼻子慢慢吸氣… 4 秒" : "慢慢吐氣… 6 秒";
+    }
+    const s = Math.ceil((pacerEnd - now) / 1000);
+    left.textContent = Math.floor(s / 60) + ":" + pad(s % 60);
+  };
+  tick();
+  pacerTimer = setInterval(tick, 250);
+}
+
+/* ---------- export / import ---------- */
+function csv() {
+  const head = ["日期", "上床", "關燈", "入睡分鐘", "夜醒次數", "夜醒分鐘", "最後醒來", "下床", "品質1-5", "小睡分鐘", "咖啡因", "酒精", "助眠藥", "在床分鐘", "睡眠分鐘", "睡眠效率%", "備註"];
+  const q = v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const rows = entries().map(e => [e.date, e.bed, e.lights, e.c.sol, e.wakes ?? "", e.c.waso, e.wake, e.out, e.quality, e.nap, e.caffeine ? 1 : 0, e.alcohol ? 1 : 0, e.meds ? 1 : 0, e.c.tib, e.c.tst, Math.round(e.c.se), e.notes]);
+  return "﻿" + [head, ...rows].map(r => r.map(q).join(",")).join("\n");
+}
+async function offerFile(filename, text) {
+  if (window.claude && typeof window.claude.use === "function") {
+    let dl = null;
+    try { dl = await window.claude.use("downloads"); } catch (e) {}
+    if (dl) {
+      try { await dl.save({ filename, data: text }); toast("已存檔"); return; }
+      catch (e) { if (e && e.code === "declined") return; }
+    }
+    showText(filename, text);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: filename.endsWith(".csv") ? "text/csv" : "application/json" }));
+  a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function showText(filename, text) {
+  const m = $("#modal");
+  m.innerHTML = `<div class="panel"><h3>${esc(filename)}</h3><p class="small muted">這裡無法直接下載。請複製下面的內容，貼到記事本後另存檔案。</p><textarea id="modal-text" readonly>${esc(text)}</textarea><div class="btns"><button class="primary" data-act="copy">複製</button><button data-act="close-modal">關閉</button></div></div>`;
+  m.hidden = false;
+}
+function importJSON(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { toast("檔案不是有效的備份格式"); return; }
+  if (!data || typeof data.diary !== "object") { toast("檔案裡找不到睡眠日記"); return; }
+  const ok = /^\d{4}-\d{2}-\d{2}$/;
+  let n = 0;
+  Object.keys(data.diary).forEach(d => { if (ok.test(d) && !validate({ date: d, ...data.diary[d] })) { state.diary[d] = data.diary[d]; n++; } });
+  if (data.profile && data.profile.screening && data.profile.wakeTime) state.profile = data.profile;
+  saveLocal(); uploadAll();
+  toast("已匯入 " + n + " 晚的紀錄");
+  render();
+}
+
+/* ---------- ui feedback ---------- */
+let toastTimer = null;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2800); }
+
+/* ---------- events ---------- */
+document.addEventListener("click", async ev => {
+  const tab = ev.target.closest("[data-tab]");
+  if (tab) { view = tab.dataset.tab; editing = null; pendingDelete = null; pendingReset = false; render(); window.scrollTo(0, 0); return; }
+  const b = ev.target.closest("[data-act]");
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === "go") { view = b.dataset.v; render(); window.scrollTo(0, 0); }
+  else if (act === "start-window") {
+    const bp = baselineProposal(); if (!bp || !bp.ready) return;
+    state.profile.windows = [{ start: todayISO(), minutes: bp.minutes, wake: state.profile.wakeTime, reason: "基線平均睡眠 " + hm(bp.tst) + "，效率 " + pct(bp.se) }];
+    saveProfile(); toast("今晚開始新的睡眠時段"); render();
+  } else if (act === "apply-titration") {
+    const tt = titration(); const w = curWin(); if (!tt || !tt.enough) return;
+    state.profile.windows.push({ start: todayISO(), minutes: tt.minutes, wake: w.wake, reason: "效率 " + pct(tt.se) + "，" + tt.decision });
+    saveProfile(); toast("已套用新時段"); render();
+  } else if (act === "edit") { editing = b.dataset.d; pendingDelete = null; render(); window.scrollTo(0, 0); }
+  else if (act === "cancel-edit") { editing = null; render(); }
+  else if (act === "del") { pendingDelete = b.dataset.d; render(); }
+  else if (act === "del-cancel") { pendingDelete = null; render(); }
+  else if (act === "del-confirm") { const d = b.dataset.d; delete state.diary[d]; removeEntry(d); pendingDelete = null; if (editing === d) editing = null; toast("已刪除 " + md(d)); render(); }
+  else if (act === "rescreen") { screenDraft = null; view = "screen"; render(); window.scrollTo(0, 0); }
+  else if (act === "cancel-screen") { screenDraft = null; view = "settings"; render(); }
+  else if (act === "pacer") startPacer();
+  else if (act === "export-csv") offerFile("睡眠日記-" + todayISO() + ".csv", csv());
+  else if (act === "export-json") offerFile("睡眠日記備份-" + todayISO() + ".json", JSON.stringify(state, null, 2));
+  else if (act === "reset") { pendingReset = true; render(); }
+  else if (act === "reset-cancel") { pendingReset = false; render(); }
+  else if (act === "reset-confirm") {
+    const dates = Object.keys(state.diary);
+    state = blank(); saveLocal();
+    if (cloud) { enqueue(() => cloud.col.doc("profile").delete()); dates.forEach(d => enqueue(() => cloud.col.doc("n-" + d).delete())); }
+    pendingReset = false; view = "today"; screenDraft = null; render(); toast("已刪除全部紀錄");
+  } else if (act === "copy") {
+    const ta = $("#modal-text");
+    try { await navigator.clipboard.writeText(ta.value); toast("已複製"); } catch (e) { ta.focus(); ta.select(); toast("已選取，請長按或用 Ctrl+C 複製"); }
+  } else if (act === "close-modal") { $("#modal").hidden = true; }
+});
+
+document.addEventListener("change", ev => {
+  const el = ev.target;
+  if (el.dataset && el.dataset.g && screenDraft) {
+    if (el.dataset.g === "contra") screenDraft.contra[el.dataset.k] = el.checked;
+    else if (el.dataset.g === "stopbang") screenDraft.stopbang[el.dataset.k] = el.checked;
+    else if (el.dataset.g === "crisis") screenDraft.crisis = el.checked;
+    else if (el.dataset.g === "flag") screenDraft[el.dataset.k] = el.checked;
+    const wake = $("#s-wake").value, older = $("#s-older").checked, y = window.scrollY;
+    render();
+    $("#s-wake").value = wake; $("#s-older").checked = older;
+    window.scrollTo(0, y);
+    const again = document.getElementById(el.id); if (again) again.focus();
+  } else if (el.dataset && el.dataset.hyg) {
+    state.profile.checklist = state.profile.checklist || {};
+    state.profile.checklist[el.dataset.hyg] = el.checked;
+    saveProfile();
+  } else if (el.id === "import-file" && el.files && el.files[0]) {
+    const r = new FileReader();
+    r.onload = () => importJSON(String(r.result));
+    r.readAsText(el.files[0]);
+  }
+});
+
+document.addEventListener("submit", ev => {
+  ev.preventDefault();
+  const f = ev.target;
+  if (f.id === "screen-form") {
+    const wake = $("#s-wake").value || "07:00";
+    const first = !state.profile;
+    const prevMode = first ? null : mode();
+    if (first) state.profile = { createdAt: todayISO(), wakeTime: wake, older: $("#s-older").checked, windows: [], checklist: {}, thoughts: [], screening: screenDraft };
+    else { state.profile.screening = screenDraft; state.profile.older = $("#s-older").checked; setWake(wake); }
+    screenDraft = null;
+    saveProfile();
+    view = "today";
+    if (!first && prevMode !== mode()) toast(mode() === "standard" ? "已切換到完整版" : "已切換到溫和版");
+    render(); window.scrollTo(0, 0);
+  } else if (f.id === "diary-form") {
+    const g = id => $("#" + id);
+    const e = {
+      date: g("f-date").value, bed: g("f-bed").value, lights: g("f-lights").value,
+      sol: Math.max(0, +g("f-sol").value || 0), wakes: Math.max(0, +g("f-wakes").value || 0), waso: Math.max(0, +g("f-waso").value || 0),
+      wake: g("f-wake").value, out: g("f-out").value, quality: +g("f-quality").value, nap: Math.max(0, +g("f-nap").value || 0),
+      caffeine: g("f-caffeine").checked, alcohol: g("f-alcohol").checked, meds: g("f-meds").checked, notes: g("f-notes").value.trim(),
+    };
+    const err = validate(e);
+    if (err) { const p = g("f-err"); p.textContent = err; p.hidden = false; return; }
+    const { date, ...body } = e;
+    const existed = !!state.diary[date] && editing !== date;
+    state.diary[date] = body;
+    saveEntry(date);
+    editing = null;
+    const c = calc(body);
+    toast((existed ? "已覆蓋 " : "已儲存 ") + md(date) + "：睡眠效率 " + pct(c.se));
+    render();
+  } else if (f.id === "thought-form") {
+    const sit = $("#t-sit").value.trim(), auto = $("#t-auto").value.trim(), alt = $("#t-alt").value.trim();
+    if (!auto) { toast("請至少寫下腦中的想法"); return; }
+    state.profile.thoughts = (state.profile.thoughts || []).concat([{ date: todayISO(), sit, auto, alt }]).slice(-50);
+    saveProfile(); toast("已儲存"); render();
+  } else if (f.id === "settings-form") {
+    state.profile.older = $("#st-older").checked;
+    setWake($("#st-wake").value || state.profile.wakeTime);
+    saveProfile(); toast("已儲存"); render();
+  }
+});
+
+function setWake(wake) {
+  if (wake === state.profile.wakeTime) return;
+  state.profile.wakeTime = wake;
+  const w = curWin();
+  if (w) {
+    if (w.start === todayISO()) w.wake = wake;
+    else state.profile.windows.push({ start: todayISO(), minutes: w.minutes, wake, reason: "更改起床時間" });
+  }
+}
+
+/* tooltip for chart marks */
+function showTip(target, x, y) {
+  const tip = $("#tip"); tip.textContent = target.dataset.tip; tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - r.width - 8, x - r.width / 2)) + "px";
+  tip.style.top = Math.max(8, y - r.height - 12) + "px";
+}
+document.addEventListener("pointerover", ev => { const t = ev.target.closest && ev.target.closest(".hit"); if (t) showTip(t, ev.clientX, ev.clientY); });
+document.addEventListener("pointermove", ev => { const t = ev.target.closest && ev.target.closest(".hit"); if (t) showTip(t, ev.clientX, ev.clientY); else $("#tip").hidden = true; });
+document.addEventListener("pointerdown", ev => { const t = ev.target.closest && ev.target.closest(".hit"); if (t) showTip(t, ev.clientX, ev.clientY); else $("#tip").hidden = true; });
+window.addEventListener("scroll", () => { $("#tip").hidden = true; }, { passive: true });
+let resizeTimer = null, lastWidth = window.innerWidth;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (view === "trends" && window.innerWidth !== lastWidth) { lastWidth = window.innerWidth; render(); } }, 200);
+});
+
+/* ---------- boot ---------- */
+const local = loadLocal();
+if (local) state = local;
+render();
+initCloud();
+</script>
+</body>
+</html>
